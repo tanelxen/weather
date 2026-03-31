@@ -9,8 +9,6 @@ import Foundation
 
 final class NetworkService {
     
-//    static let shared = NetworkService()
-    
     private let apiKey = "fa8b3df74d4042b9aa7135114252304"
     private let baseURL = URL(string: "https://api.weatherapi.com/v1")!
     
@@ -18,8 +16,6 @@ final class NetworkService {
         let decoder = JSONDecoder()
         return decoder
     }()
-    
-//    private init() {}
     
     func getCurrent(latitude: Double, longitude: Double) async throws -> CurrentResponse {
         var components = URLComponents(
@@ -51,8 +47,6 @@ final class NetworkService {
             URLQueryItem(name: "days", value: String(days)),
             URLQueryItem(name: "lang", value: "ru")
         ]
-        
-//        guard let url = components?.url else { return nil }
         
         var request = URLRequest(url: components!.url!)
         request.httpMethod = "GET"
