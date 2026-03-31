@@ -29,7 +29,7 @@ final class DailyCell: UICollectionViewCell {
     
     private let tempLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .semibold)
+        label.font = .systemFont(ofSize: 18, weight: .regular)
         label.textAlignment = .right
         label.textColor = .label
         label.text = "-"
@@ -49,9 +49,6 @@ final class DailyCell: UICollectionViewCell {
     }
     
     private func setupUI() {
-        
-        contentView.backgroundColor = .secondarySystemBackground
-        contentView.layer.cornerRadius = 12
         
         contentView.addSubview(dayLabel)
         dayLabel.snp.makeConstraints {

@@ -26,6 +26,7 @@ struct WeatherViewModel {
         let city: String
         let temp: String
         let condition: String
+        let range: String
     }
     
     struct HourlyItem {
@@ -73,10 +74,18 @@ private func makeViewModel(from data: ForecastResponse) -> WeatherViewModel {
     
     let current = data.current
     
+    var range: String = ""
+    
+    // Backend присылает странные данные, current.temp_c может оказаться выше today.day.maxtemp_c
+    if let today = data.forecast.forecastday.first {
+        range = String(format: "мин: %.0f°, макс: %.0f°", today.day.mintemp_c, today.day.maxtemp_c)
+    }
+    
     let header = WeatherViewModel.Header(
         city: data.location.name,
         temp: String(format: "%.0f°", current.temp_c),
-        condition: current.condition.text
+        condition: current.condition.text,
+        range: range
     )
     
     let now = Int(Date().timeIntervalSince1970)
@@ -124,7 +133,7 @@ private extension WeatherViewModel.DailyItem
         
         self.day = isDateInToday ? "Сегодня" : dateFormatter.string(from: date)
         
-        self.temp = String(format: "%.0f° / %.0f°", Double(model.day.mintemp_c), Double(model.day.maxtemp_c))
+        self.temp = String(format: "мин: %.0f°, макс: %.0f°", model.day.mintemp_c, model.day.maxtemp_c)
         
         self.iconUrl = model.day.condition.icon
     }

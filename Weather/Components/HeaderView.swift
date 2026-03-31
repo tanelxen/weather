@@ -8,10 +8,8 @@
 import UIKit
 import SnapKit
 
-final class HeaderView: UICollectionReusableView {
+final class HeaderView: UIView {
     
-    static let reuseIdentifier = "HeaderView"
-
     private let cityLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 32, weight: .regular)
@@ -40,7 +38,6 @@ final class HeaderView: UICollectionReusableView {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .regular)
         label.textColor = .label
-        label.text = "Макс: 10°, мин: 20°"
         return label
     }()
     
@@ -56,16 +53,29 @@ final class HeaderView: UICollectionReusableView {
     
     private func layout() {
         
-        let stackView = UIStackView(arrangedSubviews: [cityLabel, tempLabel, conditionLabel, rangeLabel])
-        stackView.axis = .vertical
-        stackView.alignment = .center
-        stackView.spacing = 8
+        addSubview(cityLabel)
+        cityLabel.snp.makeConstraints {
+            $0.top.equalToSuperview().inset(16)
+            $0.centerX.equalToSuperview()
+        }
         
-        stackView.setCustomSpacing(4, after: conditionLabel)
+        addSubview(tempLabel)
+        tempLabel.snp.makeConstraints {
+            $0.top.equalTo(cityLabel.snp.bottom).offset(8)
+            $0.centerX.equalToSuperview().offset(8)
+        }
         
-        addSubview(stackView)
-        stackView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
+        addSubview(conditionLabel)
+        conditionLabel.snp.makeConstraints {
+            $0.top.equalTo(tempLabel.snp.bottom).offset(8)
+            $0.centerX.equalToSuperview()
+        }
+        
+        addSubview(rangeLabel)
+        rangeLabel.snp.makeConstraints {
+            $0.top.equalTo(conditionLabel.snp.bottom).offset(2)
+            $0.bottom.equalToSuperview().inset(16)
+            $0.centerX.equalToSuperview()
         }
     }
     
@@ -74,5 +84,6 @@ final class HeaderView: UICollectionReusableView {
         cityLabel.text = model.city
         tempLabel.text = model.temp
         conditionLabel.text = model.condition
+        rangeLabel.text = model.range
     }
 }

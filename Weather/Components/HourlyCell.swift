@@ -16,8 +16,8 @@ final class HourlyCell: UICollectionViewCell {
     private let timeLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 14, weight: .semibold)
-        label.textColor = .black
-        label.text = "01"
+        label.textColor = .label
+        label.text = "-"
         return label
     }()
     
@@ -30,9 +30,9 @@ final class HourlyCell: UICollectionViewCell {
     
     private let tempLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .medium)
-        label.textColor = .black
-        label.text = " 0°"
+        label.font = .systemFont(ofSize: 18, weight: .light)
+        label.textColor = .label
+        label.text = "-"
         return label
     }()
     
@@ -50,9 +50,6 @@ final class HourlyCell: UICollectionViewCell {
     
     private func setupUI() {
         
-        contentView.backgroundColor = .secondarySystemBackground
-        contentView.layer.cornerRadius = 12
-        
         contentView.addSubview(timeLabel)
         timeLabel.snp.makeConstraints {
             $0.top.equalToSuperview().inset(12)
@@ -68,7 +65,7 @@ final class HourlyCell: UICollectionViewCell {
         contentView.addSubview(tempLabel)
         tempLabel.snp.makeConstraints {
             $0.bottom.equalToSuperview().inset(12)
-            $0.centerX.equalToSuperview()
+            $0.centerX.equalToSuperview().offset(4)
         }
     }
     
