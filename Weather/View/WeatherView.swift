@@ -14,7 +14,7 @@ protocol WeatherView: AnyObject {
 enum WeatherViewState {
     case loading
     case success(WeatherViewModel)
-    case error(message: String)
+    case error(AlertViewModel)
 }
 
 struct WeatherViewModel {
@@ -40,4 +40,10 @@ struct WeatherViewModel {
         let temp: String
         let iconUrl: String
     }
+}
+
+struct AlertViewModel {
+    let title: String
+    let message: String
+    let isRetriable: Bool
 }

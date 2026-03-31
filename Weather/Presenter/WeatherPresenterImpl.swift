@@ -11,11 +11,11 @@ final class WeatherPresenterImpl: WeatherPresenter {
     
     weak var view: WeatherView?
     
-    let weatherService: NetworkService
-    let locationService: LocationService
+    private let weatherClient: WeatherClient
+    private let locationService: LocationService
     
-    init(weatherClient: NetworkService = NetworkService(), locationService: LocationService = LocationService()) {
-        self.weatherService = weatherClient
+    init(weatherClient: WeatherClient, locationService: LocationService) {
+        self.weatherClient = weatherClient
         self.locationService = locationService
     }
     
@@ -33,13 +33,22 @@ final class WeatherPresenterImpl: WeatherPresenter {
         let coords = await locationService.getCurrentLocation().coordinate
         
         do {
-            let data = try await weatherService.getForecast(latitude: coords.latitude, longitude: coords.longitude, days: 3)
+            let data = try await weatherClient.getForecast(latitude: coords.latitude, longitude: coords.longitude, days: 3)
             
             let vm = makeViewModel(from: data)
             await view?.update(with: .success(vm))
             
         } catch {
-            await view?.update(with: .error(message: "Что-то пошло не так..."))
+            
+            if let weatherError = error as? WeatherError, case .apiError(let code, _) = weatherError {
+                let message = (code == 2006) ? "Удостоверьтесь, что у вас валидный API-ключ" : error.localizedDescription
+                let vm = AlertViewModel(title: "Что-то пошло не так", message: message, isRetriable: false)
+                await view?.update(with: .error(vm))
+                return
+            }
+            
+            let vm = AlertViewModel(title: "Что-то пошло не так", message: error.localizedDescription, isRetriable: true)
+            await view?.update(with: .error(vm))
         }
     }
 }

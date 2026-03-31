@@ -53,3 +53,10 @@ enum WeatherAPI {
         let condition: Condition
     }
 }
+
+extension WeatherAPI {
+    struct Error: Decodable {
+        let code: Int
+        let message: String
+    }
+}

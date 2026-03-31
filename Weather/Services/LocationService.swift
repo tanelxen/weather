@@ -7,25 +7,11 @@
 
 import CoreLocation
 
-/*
- 
- 
- func fetchCurrentLocation() async throws -> CLLocation {
- let location = try await CLLocationUpdate.self.requestLocation()
- return location
- }
- 
- Task {
- do {
- let userLocation = try await fetchCurrentLocation()
- print("User location: \(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude)")
- } catch {
- print("Failed to fetch location: \(error.localizedDescription)")
- }
- }
- */
+protocol LocationService: AnyObject {
+    func getCurrentLocation() async -> CLLocation
+}
 
-final class LocationService {
+final class LocationServiceMock: LocationService {
     
     private let moscowLocation = CLLocation(latitude: 55.752, longitude: 37.616)
     
@@ -33,3 +19,20 @@ final class LocationService {
         return moscowLocation
     }
 }
+
+//final class LocationServiceImpl: LocationService {
+//    
+//    private let moscowLocation = CLLocation(latitude: 55.752, longitude: 37.616)
+//    
+//    func getCurrentLocation() async -> CLLocation {
+//        
+//        do {
+//            let userLocation = try await CLLocationUpdate.requestLocation()
+//            print("User location: \(userLocation.coordinate.latitude), \(userLocation.coordinate.longitude)")
+//        } catch {
+//            print("Failed to fetch location: \(error.localizedDescription)")
+//        }
+//    }
+//}
+
+
