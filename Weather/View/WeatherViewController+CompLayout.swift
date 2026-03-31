@@ -19,16 +19,6 @@ extension WeatherViewController {
             }
         }
         
-        let config = UICollectionViewCompositionalLayoutConfiguration()
-        config.boundarySupplementaryItems = [
-            NSCollectionLayoutBoundarySupplementaryItem(
-                layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .estimated(200)),
-                elementKind: "GlobalHeaderKind",
-                alignment: .top
-            )
-        ]
-        layout.configuration = config
-        
         layout.register(SectionBackgroundView.self, forDecorationViewOfKind: SectionBackgroundView.reuseIdentifier)
         return layout
     }
@@ -45,13 +35,19 @@ private func makeHourlySection(environment: NSCollectionLayoutEnvironment) -> NS
     let group = NSCollectionLayoutGroup.horizontal(layoutSize: groupSize, subitems: [item])
     
     let section = NSCollectionLayoutSection(group: group)
-    section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 0, bottom: 16, trailing: 0)
+    section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 16, trailing: 0)
     section.orthogonalScrollingBehavior = .groupPaging
-    //    section.interGroupSpacing = 4
     
     let background = NSCollectionLayoutDecorationItem.background(elementKind: SectionBackgroundView.reuseIdentifier)
-    background.contentInsets = .init(top: 16, leading: 0, bottom: 16, trailing: 0)
+    background.contentInsets = .init(top: 0, leading: 0, bottom: 16, trailing: 0)
     section.decorationItems = [background]
+    
+    let header = NSCollectionLayoutBoundarySupplementaryItem(
+        layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(52)),
+        elementKind: UICollectionView.elementKindSectionHeader,
+        alignment: .top)
+//    header.pinToVisibleBounds = true
+    section.boundarySupplementaryItems = [header]
     
     return section
 }
@@ -64,12 +60,18 @@ private func makeDailySection() -> NSCollectionLayoutSection {
     let group = NSCollectionLayoutGroup.vertical(layoutSize: groupSize, subitems: [item])
     
     let section = NSCollectionLayoutSection(group: group)
-    section.contentInsets = NSDirectionalEdgeInsets(top: 16, leading: 0, bottom: 16, trailing: 0)
-    section.interGroupSpacing = 4
+    section.contentInsets = NSDirectionalEdgeInsets(top: 0, leading: 0, bottom: 16, trailing: 0)
     
     let background = NSCollectionLayoutDecorationItem.background(elementKind: SectionBackgroundView.reuseIdentifier)
-    background.contentInsets = .init(top: 16, leading: 0, bottom: 16, trailing: 0)
+    background.contentInsets = .init(top: 0, leading: 0, bottom: 16, trailing: 0)
     section.decorationItems = [background]
+    
+    let header = NSCollectionLayoutBoundarySupplementaryItem(
+        layoutSize: NSCollectionLayoutSize(widthDimension: .fractionalWidth(1.0), heightDimension: .absolute(52)),
+        elementKind: UICollectionView.elementKindSectionHeader,
+        alignment: .top)
+//    header.pinToVisibleBounds = true
+    section.boundarySupplementaryItems = [header]
     
     return section
 }
@@ -80,8 +82,21 @@ private final class SectionBackgroundView: UICollectionReusableView {
     override init(frame: CGRect) {
         super.init(frame: frame)
         
-        backgroundColor = .secondarySystemBackground
         layer.cornerRadius = 16
+        clipsToBounds = true
+        
+        let blurEffect = UIBlurEffect(style: .systemThinMaterialDark)
+        let visualEffectView = UIVisualEffectView(effect: blurEffect)
+        
+        visualEffectView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(visualEffectView)
+        
+        NSLayoutConstraint.activate([
+            visualEffectView.topAnchor.constraint(equalTo: topAnchor),
+            visualEffectView.bottomAnchor.constraint(equalTo: bottomAnchor),
+            visualEffectView.leadingAnchor.constraint(equalTo: leadingAnchor),
+            visualEffectView.trailingAnchor.constraint(equalTo: trailingAnchor)
+        ])
     }
     
     required init?(coder: NSCoder) {

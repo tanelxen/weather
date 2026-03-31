@@ -15,7 +15,7 @@ final class DailyCell: UICollectionViewCell {
     private let dayLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .regular)
-        label.textColor = .label
+        label.textColor = .white
         label.text = "-"
         return label
     }()
@@ -31,7 +31,7 @@ final class DailyCell: UICollectionViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .regular)
         label.textAlignment = .right
-        label.textColor = .label
+        label.textColor = .white
         label.text = "-"
         return label
     }()

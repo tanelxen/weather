@@ -10,7 +10,15 @@ import SnapKit
 
 final class WeatherViewController: UIViewController {
     
-    let headerView = HeaderView()
+    private let imageView: UIImageView = {
+        let view = UIImageView()
+        view.contentMode = .scaleAspectFill
+        view.clipsToBounds = true
+        view.image = UIImage(named: "sky")
+        return view
+    }()
+    
+    private let currentView = CurrentView()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
     
     private let loaderView: UIActivityIndicatorView = {
@@ -36,13 +44,19 @@ final class WeatherViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         
-        view.backgroundColor = .systemBackground
+        collectionView.backgroundColor = .clear
         
         layout()
         configure()
     }
     
     private func layout() {
+        
+        view.addSubview(imageView)
+        imageView.snp.makeConstraints {
+            $0.edges.equalToSuperview()
+        }
+        
         view.addSubview(loaderView)
         loaderView.snp.makeConstraints {
             $0.center.equalToSuperview()
@@ -54,15 +68,28 @@ final class WeatherViewController: UIViewController {
             $0.centerY.equalToSuperview()
         }
         
+        view.addSubview(currentView)
+        currentView.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top)
+            $0.leading.trailing.equalToSuperview()
+        }
+        
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
+            $0.top.equalTo(currentView.snp.bottom)
             $0.leading.trailing.equalToSuperview().inset(16)
-            $0.top.bottom.equalToSuperview()
+            $0.bottom.equalToSuperview()
         }
     }
     
     private func configure() {
-        collectionView.register(UICollectionReusableView.self, forSupplementaryViewOfKind: "GlobalHeaderKind", withReuseIdentifier: "GlobalHeader")
+        view.backgroundColor = .systemBackground
+        
+        collectionView.showsHorizontalScrollIndicator = false
+        collectionView.showsVerticalScrollIndicator = false
+        collectionView.backgroundColor = .clear
+        
+        collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SectionHeader")
         collectionView.register(HourlyCell.self, forCellWithReuseIdentifier: HourlyCell.identifier)
         collectionView.register(DailyCell.self, forCellWithReuseIdentifier: DailyCell.identifier)
         collectionView.dataSource = self
@@ -76,6 +103,7 @@ final class WeatherViewController: UIViewController {
             self?.presenter.loadData()
         }
         
+        // Обновляем данные при возврате в foreground
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
@@ -101,22 +129,27 @@ extension WeatherViewController: WeatherView {
     private func showSuccess(_ vm: WeatherViewModel) {
         
         self.viewModel = vm
-        headerView.configure(with: vm.header)
+        currentView.configure(with: vm.current)
         collectionView.reloadData()
+        
+        currentView.isHidden = false
         collectionView.isHidden = false
         
         loaderView.stopAnimating()
-        errorView.isHidden = false
+        errorView.isHidden = true
     }
     
     private func showLoading() {
         loaderView.startAnimating()
+        currentView.isHidden = true
         collectionView.isHidden = true
         errorView.isHidden = true
     }
     
     private func showAlert(_ vm: AlertViewModel) {
         loaderView.stopAnimating()
+        
+        currentView.isHidden = true
         collectionView.isHidden = true
         
         errorView.configure(with: vm)

@@ -18,21 +18,30 @@ enum WeatherViewState {
 }
 
 struct WeatherViewModel {
-    let header: Header
-    let hourly: [HourlyItem]
-    let daily: [DailyItem]
+    let current: Current
+    let hourly: Hourly
+    let daily: Daily
     
-    struct Header {
+    struct Current {
         let city: String
         let temp: String
         let condition: String
-        let range: String
+    }
+    
+    struct Hourly {
+        let header: String
+        let items: [HourlyItem]
     }
     
     struct HourlyItem {
         let time: String
         let temp: String
         let iconUrl: String
+    }
+    
+    struct Daily {
+        let header: String
+        let items: [DailyItem]
     }
     
     struct DailyItem {

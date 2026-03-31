@@ -22,8 +22,8 @@ extension WeatherViewController: UICollectionViewDataSource {
         guard let viewModel else { return 0 }
         
         switch SectionType(rawValue: section) {
-            case .hourly: return viewModel.hourly.count
-            case .daily: return viewModel.daily.count
+            case .hourly: return viewModel.hourly.items.count
+            case .daily: return viewModel.daily.items.count
             case .none: return 0
         }
     }
@@ -35,13 +35,13 @@ extension WeatherViewController: UICollectionViewDataSource {
         switch SectionType(rawValue: indexPath.section) {
             case .hourly:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HourlyCell.identifier, for: indexPath) as! HourlyCell
-                let hour = viewModel.hourly[indexPath.item]
+                let hour = viewModel.hourly.items[indexPath.item]
                 cell.configure(with: hour)
                 return cell
                 
             case .daily:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DailyCell.identifier, for: indexPath) as! DailyCell
-                let day = viewModel.daily[indexPath.item]
+                let day = viewModel.daily.items[indexPath.item]
                 cell.configure(with: day)
                 return cell
                 
@@ -52,17 +52,14 @@ extension WeatherViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, viewForSupplementaryElementOfKind kind: String, at indexPath: IndexPath) -> UICollectionReusableView {
         
-        if kind == "GlobalHeaderKind" {
-            let headerContainer = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "GlobalHeader", for: indexPath)
-            
-            headerContainer.addSubview(headerView)
-            headerView.snp.makeConstraints {
-                $0.edges.equalToSuperview()
-            }
-            
-            return headerContainer
+        let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "SectionHeader", for: indexPath) as! SectionHeaderView
+        
+        switch SectionType(rawValue: indexPath.section) {
+            case .hourly: header.title = viewModel?.hourly.header
+            case .daily: header.title = viewModel?.daily.header
+            case .none: break
         }
         
-        return UICollectionReusableView()
+        return header
     }
 }
