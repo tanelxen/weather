@@ -16,15 +16,15 @@ final class HeaderView: UICollectionReusableView {
         let label = UILabel()
         label.font = .systemFont(ofSize: 32, weight: .regular)
         label.textColor = .label
-        label.text = "Москва"
+        label.text = "-"
         return label
     }()
     
-    private let temperatureLabel: UILabel = {
+    private let tempLabel: UILabel = {
         let label = UILabel()
         label.font = .systemFont(ofSize: 64, weight: .light)
         label.textColor = .label
-        label.text = " 9°"
+        label.text = "-°"
         return label
     }()
     
@@ -32,7 +32,7 @@ final class HeaderView: UICollectionReusableView {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .regular)
         label.textColor = .secondaryLabel
-        label.text = "В основном облачно"
+        label.text = "-"
         return label
     }()
     
@@ -46,6 +46,7 @@ final class HeaderView: UICollectionReusableView {
     
     override init(frame: CGRect) {
         super.init(frame: frame)
+        
         layout()
     }
     
@@ -55,7 +56,7 @@ final class HeaderView: UICollectionReusableView {
     
     private func layout() {
         
-        let stackView = UIStackView(arrangedSubviews: [cityLabel, temperatureLabel, conditionLabel, rangeLabel])
+        let stackView = UIStackView(arrangedSubviews: [cityLabel, tempLabel, conditionLabel, rangeLabel])
         stackView.axis = .vertical
         stackView.alignment = .center
         stackView.spacing = 8
@@ -66,5 +67,12 @@ final class HeaderView: UICollectionReusableView {
         stackView.snp.makeConstraints {
             $0.edges.equalToSuperview()
         }
+    }
+    
+    func configure(with model: WeatherViewModel.Header) {
+        
+        cityLabel.text = model.city
+        tempLabel.text = model.temp
+        conditionLabel.text = model.condition
     }
 }

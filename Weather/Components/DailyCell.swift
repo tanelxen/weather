@@ -16,7 +16,7 @@ final class DailyCell: UICollectionViewCell {
         let label = UILabel()
         label.font = .systemFont(ofSize: 18, weight: .regular)
         label.textColor = .label
-        label.text = "Сегодня"
+        label.text = "-"
         return label
     }()
     
@@ -32,7 +32,7 @@ final class DailyCell: UICollectionViewCell {
         label.font = .systemFont(ofSize: 18, weight: .semibold)
         label.textAlignment = .right
         label.textColor = .label
-        label.text = "0°"
+        label.text = "-"
         return label
     }()
     
@@ -43,6 +43,11 @@ final class DailyCell: UICollectionViewCell {
     
     required init?(coder: NSCoder) { fatalError() }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView.image = nil
+    }
+    
     private func setupUI() {
         
         contentView.backgroundColor = .secondarySystemBackground
@@ -52,12 +57,12 @@ final class DailyCell: UICollectionViewCell {
         dayLabel.snp.makeConstraints {
             $0.leading.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.width.equalTo(100)
         }
         
         contentView.addSubview(imageView)
         imageView.snp.makeConstraints {
-            $0.center.equalToSuperview()
+            $0.leading.equalToSuperview().inset(100)
+            $0.centerY.equalToSuperview()
             $0.size.equalTo(40)
         }
         
@@ -65,19 +70,12 @@ final class DailyCell: UICollectionViewCell {
         tempLabel.snp.makeConstraints {
             $0.trailing.equalToSuperview().inset(16)
             $0.centerY.equalToSuperview()
-            $0.width.equalTo(60)
         }
     }
     
-//    func configure(with forecast: ForecastDay) {
-//        let formatter = DateFormatter()
-//        formatter.dateFormat = "yyyy-MM-dd"
-//        if let date = formatter.date(from: forecast.date) {
-//            formatter.dateFormat = "EEEE" // "Monday"
-//            dayLabel.text = formatter.string(from: date).capitalized
-//        }
-//        
-//        tempLabel.text = "\(Int(forecast.day.avgtemp_c))°"
-//        iconView.loadImage(from: forecast.day.condition.icon)
-//    }
+    func configure(with model: WeatherViewModel.DailyItem) {
+        dayLabel.text = model.day
+        tempLabel.text = model.temp
+        imageView.loadImage(from: model.iconUrl)
+    }
 }

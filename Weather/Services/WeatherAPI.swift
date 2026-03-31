@@ -18,6 +18,7 @@ enum WeatherAPI {
     }
     
     struct Current: Decodable {
+        let last_updated_epoch: Int
         let temp_c: Double
         let condition: Condition
         let is_day: Int
@@ -34,13 +35,15 @@ enum WeatherAPI {
     }
     
     struct ForecastDay: Decodable {
-        let date: String
+        let date_epoch: Int
         let day: Day
         let hour: [Hour]
     }
     
     struct Day: Decodable {
+        let maxtemp_c: Double
         let avgtemp_c: Double
+        let mintemp_c: Double
         let condition: Condition
     }
     

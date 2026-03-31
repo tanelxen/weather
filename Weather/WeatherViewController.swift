@@ -13,10 +13,14 @@ final class WeatherViewController: UIViewController {
     private lazy var collectionView: UICollectionView = {
         UICollectionView(frame: .zero, collectionViewLayout: createLayout())
     }()
+    
+    private let presenter = WeatherPresenter()
+    
+    private var data: WeatherViewModel?
 
     override func viewDidLoad() {
-        
         super.viewDidLoad()
+        
         view.backgroundColor = .systemBackground
         
         view.addSubview(collectionView)
@@ -34,37 +38,38 @@ final class WeatherViewController: UIViewController {
         )
         
         collectionView.dataSource = self
+        presenter.view = self
         
-        collectionView.reloadData()
-        
-        loadCurrent()
+        presenter.loadData()
     }
 }
 
-extension WeatherViewController {
-    
-    private func loadCurrent() {
-        
-        let latitude: Double = 55.752
-        let longitude: Double = 37.616
-        
-        Task {
-            if let forecast = await NetworkService.shared.getForecast(latitude: latitude, longitude: longitude, days: 3) {
-                update(with: forecast)
-            }
+extension WeatherViewController: WeatherView {
+    func update(with state: WeatherViewState) {
+        switch state {
+            case .loading: showLoading()
+            case .success(let data): showSuccess(data: data)
+            case .error: showError()
         }
     }
     
-    @MainActor
-    private func update(with: ForecastResponse) {
-//        cityLabel.text = with.location.name
-//        temperatureLabel.text = String(format: " %.0f°", with.current.temp_c)
+    private func showSuccess(data: WeatherViewModel) {
+        self.data = data
+        collectionView.reloadData()
+    }
+    
+    private func showLoading() {
+        
+    }
+    
+    private func showError() {
+        
     }
 }
 
 extension WeatherViewController {
     
-    func createLayout() -> UICollectionViewLayout {
+    private func createLayout() -> UICollectionViewLayout {
         return UICollectionViewCompositionalLayout { (sectionIndex, layoutEnvironment) -> NSCollectionLayoutSection? in
             
             if sectionIndex == 0 {
@@ -115,31 +120,35 @@ extension WeatherViewController {
 
 extension WeatherViewController: UICollectionViewDataSource {
     
-    func numberOfSections(in collectionView: UICollectionView) -> Int {
-        2
-    }
+    func numberOfSections(in collectionView: UICollectionView) -> Int { 2 }
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
-        3
+        
+        guard let data else { return 0 }
+        
+        switch section {
+            case 0:
+                return data.hourly.count
+            case 1:
+                return data.daily.count
+            default:
+                return 0
+        }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-//        guard let weatherData = currentWeatherData else { return UICollectionViewCell() }
+        guard let data else { return UICollectionViewCell() }
         
-        if indexPath.section == 0
-        {
+        if indexPath.section == 0 {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HourlyCell.identifier, for: indexPath) as! HourlyCell
-            // Берем отфильтрованные часы из нашей модели
-//            let hour = filteredHours[indexPath.item]
-//            cell.configure(with: hour)
+            let hour = data.hourly[indexPath.item]
+            cell.configure(with: hour)
             return cell
-        }
-        else
-        {
+        } else {
             let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DailyCell.identifier, for: indexPath) as! DailyCell
-//            let day = weatherData.forecast.forecastday[indexPath.item]
-//            cell.configure(with: day)
+            let day = data.daily[indexPath.item]
+            cell.configure(with: day)
             return cell
         }
     }
@@ -154,6 +163,10 @@ extension WeatherViewController: UICollectionViewDataSource {
         guard let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: HeaderView.reuseIdentifier, for: indexPath) as? HeaderView
         else {
             return UICollectionReusableView()
+        }
+        
+        if let data {
+            header.configure(with: data.header)
         }
         
         return header

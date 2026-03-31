@@ -24,3 +24,12 @@ import CoreLocation
  }
  }
  */
+
+final class LocationService {
+    
+    private let moscowLocation = CLLocation(latitude: 55.752, longitude: 37.616)
+    
+    func getCurrentLocation() async -> CLLocation {
+        return moscowLocation
+    }
+}

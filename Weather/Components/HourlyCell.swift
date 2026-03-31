@@ -43,6 +43,11 @@ final class HourlyCell: UICollectionViewCell {
     
     required init?(coder: NSCoder) { fatalError() }
     
+    override func prepareForReuse() {
+        super.prepareForReuse()
+        imageView.image = nil
+    }
+    
     private func setupUI() {
         
         contentView.backgroundColor = .secondarySystemBackground
@@ -67,14 +72,23 @@ final class HourlyCell: UICollectionViewCell {
         }
     }
     
-//    func configure(with hour: Hour) {
-//        // Превращаем epoch time в "14:00"
-//        let date = Date(timeIntervalSince1970: TimeInterval(hour.time_epoch))
-//        let formatter = DateFormatter()
-//        formatter.dateFormat = "HH:00"
-//        
-//        timeLabel.text = formatter.string(from: date)
-//        tempLabel.text = "\(Int(hour.temp_c))°"
-////        iconView.loadImage(from: hour.condition.icon)
-//    }
+    func configure(with model: WeatherViewModel.HourlyItem) {
+        timeLabel.text = model.time
+        tempLabel.text = model.temp
+        imageView.loadImage(from: model.iconUrl)
+    }
+}
+
+extension UIImageView {
+    func loadImage(from urlString: String) {
+        let fullPath = "https:\(urlString)" // API отдает путь без схемы
+        guard let url = URL(string: fullPath) else { return }
+        
+        Task {
+            if let (data, _) = try? await URLSession.shared.data(from: url),
+               let image = UIImage(data: data) {
+                self.image = image
+            }
+        }
+    }
 }

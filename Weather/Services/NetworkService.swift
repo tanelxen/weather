@@ -9,7 +9,7 @@ import Foundation
 
 final class NetworkService {
     
-    static let shared = NetworkService()
+//    static let shared = NetworkService()
     
     private let apiKey = "fa8b3df74d4042b9aa7135114252304"
     private let baseURL = URL(string: "https://api.weatherapi.com/v1")!
@@ -19,9 +19,9 @@ final class NetworkService {
         return decoder
     }()
     
-    private init() {}
+//    private init() {}
     
-    func getCurrent(latitude: Double, longitude: Double) async -> CurrentResponse? {
+    func getCurrent(latitude: Double, longitude: Double) async throws -> CurrentResponse {
         var components = URLComponents(
             url: baseURL.appendingPathComponent("current.json"),
             resolvingAgainstBaseURL: false
@@ -32,15 +32,13 @@ final class NetworkService {
             URLQueryItem(name: "key", value: apiKey)
         ]
         
-        guard let url = components?.url else { return nil }
-        
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: components!.url!)
         request.httpMethod = "GET"
         
-        return await doRequest(request, decodeTo: CurrentResponse.self)
+        return try await doRequest(request, decodeTo: CurrentResponse.self)
     }
     
-    func getForecast(latitude: Double, longitude: Double, days: Int) async -> ForecastResponse? {
+    func getForecast(latitude: Double, longitude: Double, days: Int) async throws -> ForecastResponse {
         
         var components = URLComponents(
             url: baseURL.appendingPathComponent("forecast.json"),
@@ -54,28 +52,22 @@ final class NetworkService {
             URLQueryItem(name: "lang", value: "ru")
         ]
         
-        guard let url = components?.url else { return nil }
+//        guard let url = components?.url else { return nil }
         
-        var request = URLRequest(url: url)
+        var request = URLRequest(url: components!.url!)
         request.httpMethod = "GET"
         
-        return await doRequest(request, decodeTo: ForecastResponse.self)
+        return try await doRequest(request, decodeTo: ForecastResponse.self)
     }
     
-    private func doRequest<T: Decodable>(_ request: URLRequest, decodeTo type: T.Type) async -> T? {
+    private func doRequest<T: Decodable>(_ request: URLRequest, decodeTo type: T.Type) async throws -> T {
 
-        do {
-            let (data, _) = try await URLSession.shared.data(for: request)
-            
-            let stringResponse = String(data: data, encoding: .utf8) ?? ""
-            print("Response: \(stringResponse)")
-            
-            return try decoder.decode(type.self, from: data)
-            
-        } catch {
-            print("Error: \(error)")
-            return nil
-        }
+        let (data, _) = try await URLSession.shared.data(for: request)
+        
+//        let stringResponse = String(data: data, encoding: .utf8) ?? ""
+//        print("Response: \(stringResponse)")
+        
+        return try decoder.decode(type.self, from: data)
     }
 }
 
