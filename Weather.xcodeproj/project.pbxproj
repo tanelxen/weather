@@ -169,9 +169,9 @@
 				DEVELOPMENT_TEAM = Q9T2S8AD86;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Weather/Other/Info.plist;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Необходим доступ к геолокации, чтобы показать погоду";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Необходим доступ к геолокации, чтобы погоду в вашей местности";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INFOPLIST_KEY_UIMainStoryboardFile = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
@@ -204,9 +204,9 @@
 				DEVELOPMENT_TEAM = Q9T2S8AD86;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Weather/Other/Info.plist;
-				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Необходим доступ к геолокации, чтобы показать погоду";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Необходим доступ к геолокации, чтобы погоду в вашей местности";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
-				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
+				INFOPLIST_KEY_UILaunchStoryboardName = "";
 				INFOPLIST_KEY_UIMainStoryboardFile = "";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";

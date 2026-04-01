@@ -17,8 +17,11 @@ final class LocationServiceImpl: NSObject {
 
     override init() {
         super.init()
-        manager.delegate = self
+        
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
+        manager.pausesLocationUpdatesAutomatically = true
+        manager.allowsBackgroundLocationUpdates = false
+        manager.delegate = self
     }
 }
 

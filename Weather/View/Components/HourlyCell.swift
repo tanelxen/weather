@@ -30,7 +30,7 @@ final class HourlyCell: UICollectionViewCell {
     
     private let tempLabel: UILabel = {
         let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .light)
+        label.font = .monospacedSystemFont(ofSize: 18, weight: .light)
         label.textColor = .white
         label.text = "-"
         return label

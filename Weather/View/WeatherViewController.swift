@@ -10,7 +10,7 @@ import SnapKit
 
 final class WeatherViewController: UIViewController {
     
-    private var skyView: SkyViewProtocol?
+    private var skyView: SkyViewProtocol!
     private let currentView = CurrentView()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
     
@@ -77,7 +77,7 @@ final class WeatherViewController: UIViewController {
         
         view.addSubview(collectionView)
         collectionView.snp.makeConstraints {
-            $0.top.equalTo(currentView.snp.bottom)
+            $0.top.equalTo(currentView.snp.bottom).offset(-64)
             $0.leading.trailing.equalToSuperview().inset(16)
             $0.bottom.equalToSuperview()
         }
@@ -86,6 +86,7 @@ final class WeatherViewController: UIViewController {
     private func configure() {
         view.backgroundColor = .systemBackground
         
+        collectionView.contentInset.top = 64
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.showsVerticalScrollIndicator = false
         collectionView.backgroundColor = .clear
@@ -109,7 +110,10 @@ final class WeatherViewController: UIViewController {
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         
-        currentView.isUserInteractionEnabled = false
+        let tap = UILongPressGestureRecognizer(target: self, action: #selector(showSettings))
+        tap.minimumPressDuration = 1.0
+        currentView.addGestureRecognizer(tap)
+        currentView.isUserInteractionEnabled = true
     }
     
     @objc private func appDidBecomeActive() {
@@ -122,6 +126,19 @@ final class WeatherViewController: UIViewController {
         }
     }
     
+    @objc private func showSettings() {
+        let vc = SkySettingsViewController(delegate: skyView)
+        
+        if let sheet = vc.sheetPresentationController {
+            sheet.largestUndimmedDetentIdentifier = .medium
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 20
+        }
+        
+        present(vc, animated: true)
+    }
+    
     deinit {
         NotificationCenter.default.removeObserver(self)
     }
@@ -130,7 +147,9 @@ final class WeatherViewController: UIViewController {
 extension WeatherViewController: WeatherView {
     func update(with state: WeatherViewState) {
         switch state {
-            case .loading: showLoading()
+            case .loading:
+                if refreshControl.isRefreshing { break }
+                showLoading()
             case .success(let vm): showSuccess(vm)
             case .error(let vm): showAlert(vm)
         }
@@ -143,7 +162,7 @@ extension WeatherViewController: WeatherView {
         skyView?.sunHeight = vm.current.isDay ? 1 : 0
         skyView?.cloudiness = vm.current.cloudiness
         
-        self.viewModel = vm
+        viewModel = vm
         currentView.configure(with: vm.current)
         collectionView.reloadData()
         

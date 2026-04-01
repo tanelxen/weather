@@ -122,7 +122,7 @@ private extension WeatherViewModel.DailyItem
         
         self.day = isDateInToday ? "Сегодня" : dateFormatter.string(from: date)
         
-        self.temp = String(format: "%.0f°  |   %.0f°", model.day.mintemp_c, model.day.maxtemp_c)
+        self.temp = String(format: "%3.0f°  | %3.0f°", model.day.mintemp_c, model.day.maxtemp_c)
         
         self.iconUrl = "https:" + model.day.condition.icon
     }

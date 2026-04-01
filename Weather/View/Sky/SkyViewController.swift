@@ -22,15 +22,6 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
     private var renderSize: CGSize = .init(width: 1, height: 1)
     private var startTime: TimeInterval = 0
     
-    private let settingsButton: UIButton = {
-        let button = UIButton(type: .system)
-        var config = UIButton.Configuration.plain()
-        config.image = UIImage(systemName: "gearshape.fill")
-        button.tintColor = .white.withAlphaComponent(0.5)
-        button.configuration = config
-        return button
-    }()
-    
     var sunHeight: Float = 0.0
     var cloudiness: Float = 0.0
     
@@ -42,28 +33,6 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupRender()
-        
-        view.addSubview(settingsButton)
-        settingsButton.snp.makeConstraints {
-            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top).inset(22)
-            $0.trailing.equalToSuperview().inset(16)
-            $0.size.equalTo(32)
-        }
-        
-        settingsButton.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
-    }
-    
-    @objc private func showSettings() {
-        let vc = SkySettingsViewController(delegate: self)
-        
-        if let sheet = vc.sheetPresentationController {
-            sheet.detents = [.medium(), .large()]
-            sheet.prefersGrabberVisible = true
-            sheet.preferredCornerRadius = 20
-            sheet.largestUndimmedDetentIdentifier = .medium
-        }
-        
-        present(vc, animated: true)
     }
     
     private func setupRender() {

@@ -59,8 +59,8 @@ final class SkySettingsViewController: UIViewController
             $0.top.left.right.equalToSuperview().inset(24)
         }
         
-        stackView.addArrangedSubview(sunHeightSlider)
-        stackView.addArrangedSubview(cloudinessSlider)
+        stackView.addArrangedSubview(wrap(for: "Время суток", sunHeightSlider))
+        stackView.addArrangedSubview(wrap(for: "Облачность", cloudinessSlider))
     }
     
     private func configurate()
@@ -83,4 +83,18 @@ final class SkySettingsViewController: UIViewController
     {
         delegate.cloudiness = cloudinessSlider.value
     }
+}
+
+private func wrap(for name: String, _ control: UIControl) -> UIView {
+    
+    let label = UILabel()
+    label.text = name + "\t\t\t"
+    
+    let stackView = UIStackView(arrangedSubviews: [label, control])
+    stackView.axis = .horizontal
+    stackView.distribution = .fill
+    stackView.alignment = .center
+    stackView.spacing = 8
+    
+    return stackView
 }
