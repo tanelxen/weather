@@ -10,8 +10,7 @@ import SnapKit
 
 final class WeatherViewController: UIViewController {
     
-    private let skyViewController = SkyViewController()
-    
+    private var skyView: SkyViewProtocol?
     private let currentView = CurrentView()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
     
@@ -52,10 +51,12 @@ final class WeatherViewController: UIViewController {
     
     private func layout() {
         
+        let skyViewController = SkyViewController()
         addChild(skyViewController)
         view.addSubview(skyViewController.view)
         skyViewController.view.snp.makeConstraints({ $0.edges.equalToSuperview() })
         skyViewController.didMove(toParent: self)
+        skyView = skyViewController
         
         view.addSubview(loaderView)
         loaderView.snp.makeConstraints {
@@ -88,11 +89,11 @@ final class WeatherViewController: UIViewController {
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.showsVerticalScrollIndicator = false
         collectionView.backgroundColor = .clear
-        collectionView.refreshControl = refreshControl
         
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SectionHeader")
         collectionView.register(HourlyCell.self, forCellWithReuseIdentifier: HourlyCell.identifier)
         collectionView.register(DailyCell.self, forCellWithReuseIdentifier: DailyCell.identifier)
+        collectionView.refreshControl = refreshControl
         collectionView.dataSource = self
         
         presenter.view = self
@@ -107,6 +108,8 @@ final class WeatherViewController: UIViewController {
         // Обновляем данные при возврате в foreground
         let notificationCenter = NotificationCenter.default
         notificationCenter.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
+        
+        currentView.isUserInteractionEnabled = false
     }
     
     @objc private func appDidBecomeActive() {
@@ -136,6 +139,9 @@ extension WeatherViewController: WeatherView {
     }
     
     private func showSuccess(_ vm: WeatherViewModel) {
+        
+        skyView?.sunHeight = vm.current.isDay ? 1 : 0
+        skyView?.cloudiness = vm.current.cloudiness
         
         self.viewModel = vm
         currentView.configure(with: vm.current)

@@ -59,6 +59,8 @@ private func makeViewModel(from data: ForecastResponse) -> WeatherViewModel {
         city: data.location.name,
         temp: String(format: "%.0f°", data.current.temp_c),
         condition: data.current.condition.text,
+        isDay: data.current.is_day == 1,
+        cloudiness: Float(data.current.cloud) * 0.01
     )
     
     let now = Int(Date().timeIntervalSince1970)

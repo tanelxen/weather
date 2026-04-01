@@ -18,6 +18,8 @@ final class WeatherClientImpl: WeatherClient {
         return decoder
     }()
     
+    private let shouldLogResponses = false
+    
     init(apiKey: String) {
         self.apiKey = apiKey
         
@@ -50,8 +52,10 @@ final class WeatherClientImpl: WeatherClient {
         let (data, response) = try await session.data(for: request)
         let httpResponse = response as! HTTPURLResponse
         
-//        let stringResponse = String(data: data, encoding: .utf8) ?? ""
-//        print("Response: \(stringResponse)")
+        if shouldLogResponses {
+            let stringResponse = String(data: data, encoding: .utf8) ?? ""
+            print("Response:\n\(stringResponse)")
+        }
         
         if httpResponse.statusCode != 200 {
             if let errorResponse = try? JSONDecoder().decode(ErrorResponse.self, from: data) {

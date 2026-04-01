@@ -8,14 +8,31 @@
 import UIKit
 import MetalKit
 
-final class SkyViewController: UIViewController {
+protocol SkyViewProtocol: AnyObject {
+    var sunHeight: Float { set get }
+    var cloudiness: Float { set get }
+}
+
+final class SkyViewController: UIViewController, SkyViewProtocol {
 
     private let mtkView = MTKView()
     private var commandQueue: MTLCommandQueue!
     private var pipelineState: MTLRenderPipelineState!
     
-    private var uniforms = SkyUniforms(time: 0, aspect: 1.0, sunHeight: 0.0, cloudy: 0.5)
+    private var renderSize: CGSize = .init(width: 1, height: 1)
     private var startTime: TimeInterval = 0
+    
+    private let settingsButton: UIButton = {
+        let button = UIButton(type: .system)
+        var config = UIButton.Configuration.plain()
+        config.image = UIImage(systemName: "gearshape.fill")
+        button.tintColor = .white.withAlphaComponent(0.5)
+        button.configuration = config
+        return button
+    }()
+    
+    var sunHeight: Float = 0.0
+    var cloudiness: Float = 0.0
     
     override func loadView() {
         super.loadView()
@@ -25,6 +42,28 @@ final class SkyViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         setupRender()
+        
+        view.addSubview(settingsButton)
+        settingsButton.snp.makeConstraints {
+            $0.top.equalTo(view.safeAreaLayoutGuide.snp.top).inset(22)
+            $0.trailing.equalToSuperview().inset(16)
+            $0.size.equalTo(32)
+        }
+        
+        settingsButton.addTarget(self, action: #selector(showSettings), for: .touchUpInside)
+    }
+    
+    @objc private func showSettings() {
+        let vc = SkySettingsViewController(delegate: self)
+        
+        if let sheet = vc.sheetPresentationController {
+            sheet.detents = [.medium(), .large()]
+            sheet.prefersGrabberVisible = true
+            sheet.preferredCornerRadius = 20
+            sheet.largestUndimmedDetentIdentifier = .medium
+        }
+        
+        present(vc, animated: true)
     }
     
     private func setupRender() {
@@ -72,15 +111,19 @@ final class SkyViewController: UIViewController {
             return
         }
         
+        
         let currentTime = CACurrentMediaTime() - startTime
-        uniforms.time = Float(currentTime)
+        
+        var uniforms = SkyUniforms(
+            time: Float(currentTime),
+            aspect: 1,
+            sunHeight: sunHeight,
+            cloudiness: cloudiness
+        )
         
         renderEncoder.setRenderPipelineState(pipelineState)
-        
-        var uniformsData = uniforms
-        renderEncoder.setFragmentBytes(&uniformsData, length: MemoryLayout<SkyUniforms>.stride, index: 0)
+        renderEncoder.setFragmentBytes(&uniforms, length: MemoryLayout<SkyUniforms>.stride, index: 0)
         renderEncoder.drawPrimitives(type: .triangle, vertexStart: 0, vertexCount: 6)
-        
         renderEncoder.endEncoding()
         
         commandBuffer.present(drawable)
@@ -90,7 +133,7 @@ final class SkyViewController: UIViewController {
 
 extension SkyViewController: MTKViewDelegate {
     func mtkView(_ view: MTKView, drawableSizeWillChange size: CGSize) {
-        uniforms.aspect = Float(size.width / size.height)
+        renderSize = size
     }
     
     func draw(in view: MTKView) {
@@ -101,8 +144,6 @@ extension SkyViewController: MTKViewDelegate {
 private struct SkyUniforms {
     var time: Float
     var aspect: Float
-    
-    // 0...1, 0 - ночь, 1 - полдень
     var sunHeight: Float
-    var cloudy: Float
+    var cloudiness: Float
 }

@@ -22,6 +22,7 @@ enum WeatherAPI {
         let temp_c: Double
         let condition: Condition
         let is_day: Int
+        let cloud: Int
     }
     
     struct Condition: Decodable {

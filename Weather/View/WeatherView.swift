@@ -26,6 +26,8 @@ struct WeatherViewModel {
         let city: String
         let temp: String
         let condition: String
+        let isDay: Bool
+        let cloudiness: Float
     }
     
     struct Hourly {

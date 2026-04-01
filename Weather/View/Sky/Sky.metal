@@ -25,7 +25,7 @@ struct SkyUniforms {
     float time;
     float aspect;
     float sunHeight;
-    float cloudy;
+    float cloudiness;
 };
 
 vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
@@ -83,14 +83,14 @@ fragment float4 skyFragmentShader(VertexOut in [[stage_in]], constant SkyUniform
         float cloud = layeredClouds(in.texCoord, uniforms.time);
         float alpha = cloudAlpha(cloud, viewDir.y);
         float3 cloudCol = cloudLighting(cloud, viewDir, sunDir);
-        sky = mix(sky, sky + cloudCol, alpha * uniforms.cloudy);
+        sky = mix(sky, sky + cloudCol, alpha * uniforms.cloudiness);
     }
     
     {
         float cloud = clouds(uv, uniforms.time);
         float alpha = cloudAlpha(cloud, viewDir.y);
         float3 cloudCol = cloudLighting(cloud, viewDir, sunDir);
-        sky = mix(sky, sky + cloudCol, alpha * uniforms.cloudy);
+        sky = mix(sky, sky + cloudCol, alpha * uniforms.cloudiness);
     }
 
     
