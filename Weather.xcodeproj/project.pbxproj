@@ -24,11 +24,22 @@
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
+/* Begin PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+		9F6BAE8F2F7D5A170027821F /* Exceptions for "Weather" folder in "Compile Sources" phase from "Weather" target */ = {
+			isa = PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet;
+			buildPhase = 9F2037B52F7AB9D200871521 /* Sources */;
+			membershipExceptions = (
+				View/Sky/Common.h,
+			);
+		};
+/* End PBXFileSystemSynchronizedGroupBuildPhaseMembershipExceptionSet section */
+
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		9F2037BB2F7AB9D200871521 /* Weather */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
 				9F2037CB2F7AB9D400871521 /* Exceptions for "Weather" folder in "Weather" target */,
+				9F6BAE8F2F7D5A170027821F /* Exceptions for "Weather" folder in "Compile Sources" phase from "Weather" target */,
 			);
 			path = Weather;
 			sourceTree = "<group>";

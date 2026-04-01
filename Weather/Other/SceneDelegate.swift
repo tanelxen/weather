@@ -40,7 +40,9 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 private func makeViewController() -> UIViewController {
     
-    let apiKey = Bundle.main.infoDictionary?["API_KEY"] as? String ?? ""
+    return SkyViewController()
+    
+    let apiKey = Bundle.main.infoDictionary?["WEATHER_API_KEY"] as? String ?? ""
     
     let weatherClient = WeatherClientImpl(apiKey: apiKey)
     let locationService = LocationServiceMock()

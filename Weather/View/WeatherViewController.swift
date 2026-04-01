@@ -18,6 +18,8 @@ final class WeatherViewController: UIViewController {
         return view
     }()
     
+    private let skyViewController = SkyViewController()
+    
     private let currentView = CurrentView()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
     
@@ -52,10 +54,10 @@ final class WeatherViewController: UIViewController {
     
     private func layout() {
         
-        view.addSubview(imageView)
-        imageView.snp.makeConstraints {
-            $0.edges.equalToSuperview()
-        }
+        addChild(skyViewController)
+        view.addSubview(skyViewController.view)
+        skyViewController.view.snp.makeConstraints({ $0.edges.equalToSuperview() })
+        skyViewController.didMove(toParent: self)
         
         view.addSubview(loaderView)
         loaderView.snp.makeConstraints {

@@ -78,5 +78,10 @@ final class CurrentView: UIView {
         cityLabel.text = model.city
         tempLabel.text = model.temp
         conditionLabel.text = model.condition
+        
+        layer.shadowColor = UIColor.black.cgColor
+        layer.shadowOffset = CGSize(width: 0, height: 4)
+        layer.shadowOpacity = 0.5
+        layer.shadowRadius = 8
     }
 }
