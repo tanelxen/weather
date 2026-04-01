@@ -14,7 +14,7 @@ final class SkyViewController: UIViewController {
     private var commandQueue: MTLCommandQueue!
     private var pipelineState: MTLRenderPipelineState!
     
-    private var uniforms = SkyUniforms(time: 0, aspect: 1.0, sunHeight: 0.0)
+    private var uniforms = SkyUniforms(time: 0, aspect: 1.0, sunHeight: 0.0, cloudy: 0.5)
     private var startTime: TimeInterval = 0
     
     override func loadView() {
@@ -104,4 +104,5 @@ private struct SkyUniforms {
     
     // 0...1, 0 - ночь, 1 - полдень
     var sunHeight: Float
+    var cloudy: Float
 }

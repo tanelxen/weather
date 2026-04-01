@@ -10,22 +10,22 @@ import SnapKit
 
 final class WeatherViewController: UIViewController {
     
-    private let imageView: UIImageView = {
-        let view = UIImageView()
-        view.contentMode = .scaleAspectFill
-        view.clipsToBounds = true
-        view.image = UIImage(named: "sky")
-        return view
-    }()
-    
     private let skyViewController = SkyViewController()
     
     private let currentView = CurrentView()
     private let collectionView = UICollectionView(frame: .zero, collectionViewLayout: createLayout())
     
+    private lazy var refreshControl: UIRefreshControl = {
+        let refreshControl = UIRefreshControl()
+        refreshControl.addTarget(self, action: #selector(refresh), for: .valueChanged)
+        refreshControl.tintColor = .white
+        return refreshControl
+    }()
+    
     private let loaderView: UIActivityIndicatorView = {
         let view = UIActivityIndicatorView(style: .large)
         view.hidesWhenStopped = true
+        view.color = .white
         return view
     }()
     
@@ -45,8 +45,6 @@ final class WeatherViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        
-        collectionView.backgroundColor = .clear
         
         layout()
         configure()
@@ -90,6 +88,7 @@ final class WeatherViewController: UIViewController {
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.showsVerticalScrollIndicator = false
         collectionView.backgroundColor = .clear
+        collectionView.refreshControl = refreshControl
         
         collectionView.register(SectionHeaderView.self, forSupplementaryViewOfKind: UICollectionView.elementKindSectionHeader, withReuseIdentifier: "SectionHeader")
         collectionView.register(HourlyCell.self, forCellWithReuseIdentifier: HourlyCell.identifier)
@@ -110,8 +109,14 @@ final class WeatherViewController: UIViewController {
         notificationCenter.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
     }
     
-    @objc func appDidBecomeActive() {
+    @objc private func appDidBecomeActive() {
         presenter.loadData()
+    }
+    
+    @objc private func refresh() {
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
+            self.presenter.loadData()
+        }
     }
     
     deinit {
@@ -126,6 +131,8 @@ extension WeatherViewController: WeatherView {
             case .success(let vm): showSuccess(vm)
             case .error(let vm): showAlert(vm)
         }
+        
+        refreshControl.endRefreshing()
     }
     
     private func showSuccess(_ vm: WeatherViewModel) {
@@ -136,6 +143,17 @@ extension WeatherViewController: WeatherView {
         
         currentView.isHidden = false
         collectionView.isHidden = false
+        
+        currentView.alpha = 0
+        collectionView.alpha = 0
+        
+        UIView.animate(withDuration: 0.3) {
+            self.currentView.alpha = 1
+        }
+        
+        UIView.animate(withDuration: 0.5, delay: 0.2) {
+            self.collectionView.alpha = 1
+        }
         
         loaderView.stopAnimating()
         errorView.isHidden = true

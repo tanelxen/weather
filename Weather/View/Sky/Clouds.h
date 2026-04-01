@@ -17,22 +17,6 @@ float clouds(float2 uv, float time)
     return smoothstep(0.4, 0.7, n);
 }
 
-float3 cloudLighting(float cloud, float3 viewDir, float3 sunDir)
-{
-    float mu = dot(viewDir, sunDir);
-    
-    float forward = pow(max(mu, 0.0), 5.0);
-    
-    float3 lightColor = float3(1.0, 0.9, 0.8);
-    float3 darkColor  = float3(0.6, 0.65, 0.7);
-    
-    float3 color = mix(darkColor, lightColor, forward);
-    
-    return color * cloud;
-}
-
-
-
 static float cloudShape(float2 uv, float time)
 {
     float2 p = uv * 2.0;
@@ -60,7 +44,7 @@ float layeredClouds(float2 uv, float time)
     return smoothstep(0.3, 0.8, combined);
 }
 
-float3 cloudLightingIOS(float cloud, float3 viewDir, float3 sunDir)
+float3 cloudLighting(float cloud, float3 viewDir, float3 sunDir)
 {
     float mu = dot(viewDir, sunDir);
     

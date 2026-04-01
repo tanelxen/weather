@@ -40,7 +40,7 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
 
 private func makeViewController() -> UIViewController {
     
-    return SkyViewController()
+//    return SkyViewController()
     
     let apiKey = Bundle.main.infoDictionary?["WEATHER_API_KEY"] as? String ?? ""
     

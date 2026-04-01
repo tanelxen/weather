@@ -80,7 +80,6 @@ private func pluralizeDays(_ count: Int) -> String {
     let remainder10 = count % 10
     let remainder100 = count % 100
     
-    // Правила для 1, 2-4, 5-0
     if remainder10 == 1 && remainder100 != 11 {
         return "\(count) день"
     } else if (remainder10 >= 2 && remainder10 <= 4) && (remainder100 < 10 || remainder100 >= 20) {
@@ -104,7 +103,7 @@ private extension WeatherViewModel.HourlyItem {
     init(from model: WeatherAPI.Hour) {
         self.time = unixToHour(unixTime: TimeInterval(model.time_epoch))
         self.temp = String(format: "%.0f°", Double(model.temp_c))
-        self.iconUrl = model.condition.icon
+        self.iconUrl = "https:" + model.condition.icon
     }
 }
 
@@ -123,6 +122,6 @@ private extension WeatherViewModel.DailyItem
         
         self.temp = String(format: "%.0f°  |   %.0f°", model.day.mintemp_c, model.day.maxtemp_c)
         
-        self.iconUrl = model.day.condition.icon
+        self.iconUrl = "https:" + model.day.condition.icon
     }
 }

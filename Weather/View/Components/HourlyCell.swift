@@ -75,17 +75,3 @@ final class HourlyCell: UICollectionViewCell {
         imageView.loadImage(from: model.iconUrl)
     }
 }
-
-extension UIImageView {
-    func loadImage(from urlString: String) {
-        let fullPath = "https:\(urlString)" // API отдает путь без схемы
-        guard let url = URL(string: fullPath) else { return }
-        
-        Task {
-            if let (data, _) = try? await URLSession.shared.data(from: url),
-               let image = UIImage(data: data) {
-                self.image = image
-            }
-        }
-    }
-}

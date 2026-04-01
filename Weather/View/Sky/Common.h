@@ -55,3 +55,9 @@ float3 rayleigh(float3 viewDir, float3 sunDir)
     float3 sky = float3(0.3, 0.5, 1.0) * (0.5 + 0.5 * r);
     return sky;
 }
+
+float3 toneMapped(float3 color, float exposure)
+{
+    color *= exposure;
+    return color / (color + float3(1.0));
+}
