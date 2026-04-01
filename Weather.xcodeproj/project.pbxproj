@@ -169,6 +169,7 @@
 				DEVELOPMENT_TEAM = Q9T2S8AD86;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Weather/Other/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Необходим доступ к геолокации, чтобы показать погоду";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = "";
@@ -203,6 +204,7 @@
 				DEVELOPMENT_TEAM = Q9T2S8AD86;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Weather/Other/Info.plist;
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Необходим доступ к геолокации, чтобы показать погоду";
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchStoryboardName = LaunchScreen;
 				INFOPLIST_KEY_UIMainStoryboardFile = "";

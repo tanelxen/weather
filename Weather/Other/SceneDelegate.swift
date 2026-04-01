@@ -45,7 +45,7 @@ private func makeViewController() -> UIViewController {
     let apiKey = Bundle.main.infoDictionary?["WEATHER_API_KEY"] as? String ?? ""
     
     let weatherClient = WeatherClientImpl(apiKey: apiKey)
-    let locationService = LocationServiceMock()
+    let locationService = LocationServiceImpl()
     let presenter = WeatherPresenterImpl(weatherClient: weatherClient, locationService: locationService)
     
     return WeatherViewController(presenter: presenter)
