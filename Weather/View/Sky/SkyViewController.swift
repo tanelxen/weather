@@ -11,6 +11,7 @@ import MetalKit
 protocol SkyViewProtocol: AnyObject {
     var sunHeight: Float { set get }
     var cloudiness: Float { set get }
+    var raininess: Float { set get }
 }
 
 final class SkyViewController: UIViewController, SkyViewProtocol {
@@ -24,6 +25,7 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
     
     var sunHeight: Float = 0.0
     var cloudiness: Float = 0.0
+    var raininess: Float = 0.0
     
     override func loadView() {
         super.loadView()
@@ -39,7 +41,7 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
 
         mtkView.device = MTLCreateSystemDefaultDevice()
         mtkView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
-        mtkView.preferredFramesPerSecond = 60
+        mtkView.preferredFramesPerSecond = 30
         mtkView.enableSetNeedsDisplay = false
         mtkView.framebufferOnly = false
         mtkView.delegate = self
@@ -84,10 +86,11 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
         let currentTime = CACurrentMediaTime() - startTime
         
         var uniforms = SkyUniforms(
+            iResolution: .init(Float(renderSize.width), Float(renderSize.height)),
             time: Float(currentTime),
-            aspect: 1,
             sunHeight: sunHeight,
-            cloudiness: cloudiness
+            cloudiness: cloudiness,
+            raininess: raininess
         )
         
         renderEncoder.setRenderPipelineState(pipelineState)
@@ -111,8 +114,9 @@ extension SkyViewController: MTKViewDelegate {
 }
 
 private struct SkyUniforms {
+    var iResolution: SIMD2<Float>
     var time: Float
-    var aspect: Float
     var sunHeight: Float
     var cloudiness: Float
+    var raininess: Float
 }

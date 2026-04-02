@@ -35,6 +35,13 @@ final class SkySettingsViewController: UIViewController
         return slider
     }()
     
+    private let raininessSlider: UISlider = {
+        let slider = UISlider()
+        slider.minimumValue = 0
+        slider.maximumValue = 1
+        return slider
+    }()
+    
     init(delegate: SkyViewProtocol) {
         self.delegate = delegate
         super.init(nibName: nil, bundle: nil)
@@ -61,6 +68,7 @@ final class SkySettingsViewController: UIViewController
         
         stackView.addArrangedSubview(wrap(for: "Время суток", sunHeightSlider))
         stackView.addArrangedSubview(wrap(for: "Облачность", cloudinessSlider))
+//        stackView.addArrangedSubview(wrap(for: "Дождливость", raininessSlider))
     }
     
     private func configurate()
@@ -72,16 +80,24 @@ final class SkySettingsViewController: UIViewController
         
         cloudinessSlider.addTarget(self, action: #selector(didChangeCloudiness), for: .valueChanged)
         cloudinessSlider.value = delegate.cloudiness
+        
+        raininessSlider.addTarget(self, action: #selector(didChangeRaininess), for: .valueChanged)
+        raininessSlider.value = delegate.raininess
     }
     
-    @objc private func didChangeSunHeight()
+    @objc private func didChangeSunHeight(_ sender: UISlider)
     {
-        delegate.sunHeight = sunHeightSlider.value
+        delegate.sunHeight = sender.value
     }
     
-    @objc private func didChangeCloudiness()
+    @objc private func didChangeCloudiness(_ sender: UISlider)
     {
-        delegate.cloudiness = cloudinessSlider.value
+        delegate.cloudiness = sender.value
+    }
+    
+    @objc private func didChangeRaininess(_ sender: UISlider)
+    {
+        delegate.raininess = sender.value
     }
 }
 

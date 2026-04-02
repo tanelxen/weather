@@ -13,19 +13,17 @@
 
 using namespace metal;
 
-//#define SUN
-#define STARS
-
 struct VertexOut {
     float4 position [[position]];
     float2 texCoord;
 };
 
 struct SkyUniforms {
+    float2 iResolution;
     float time;
-    float aspect;
     float sunHeight;
     float cloudiness;
+    float raininess;
 };
 
 vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
@@ -51,7 +49,7 @@ vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
 fragment float4 skyFragmentShader(VertexOut in [[stage_in]], constant SkyUniforms &uniforms [[buffer(0)]])
 {
     float2 uv = in.texCoord * 2.0 - 1.0;
-    uv.x *= uniforms.aspect;
+    uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
     
     float3 viewDir = normalize(float3(uv, 1.0));
     
@@ -69,7 +67,6 @@ fragment float4 skyFragmentShader(VertexOut in [[stage_in]], constant SkyUniform
     float3 ray = rayleigh(viewDir, sunDir);
     sky += ray * dayFactor * 0.5;
     
-#ifdef STARS
     {
         float s = stars(uv, uniforms.time);
         float horizonFade = smoothstep(-0.5, 0.5, viewDir.y);
@@ -77,37 +74,27 @@ fragment float4 skyFragmentShader(VertexOut in [[stage_in]], constant SkyUniform
         float starMask = 1.0 - dayFactor;
         sky += starColor * s * horizonFade * starMask * 5;
     }
-#endif
     
     {
-        float cloud = layeredClouds(in.texCoord, uniforms.time);
+        float cloud = simpleClouds(uv, uniforms.time);
         float alpha = cloudAlpha(cloud, viewDir.y);
         float3 cloudCol = cloudLighting(cloud, viewDir, sunDir);
         sky = mix(sky, sky + cloudCol, alpha * uniforms.cloudiness);
     }
     
+#ifdef RAIN
     {
-        float cloud = clouds(uv, uniforms.time);
-        float alpha = cloudAlpha(cloud, viewDir.y);
-        float3 cloudCol = cloudLighting(cloud, viewDir, sunDir);
-        sky = mix(sky, sky + cloudCol, alpha * uniforms.cloudiness);
-    }
-
-    
-#ifdef SUN
-    {
-        float2 p = uv;
-        float3 ww = normalize(float3(0.0, -0.1, 1.0));
-        float3 uu = normalize(cross( float3(0.0,1.0,0.0), ww));
-        float3 vv = normalize(cross(ww,uu));
-        float3 rd = normalize(p.x*uu + p.y*vv + 0.5*ww);
+        const float rain = uniforms.raininess * uniforms.raininess;
+        const float angle = 0.57;
+        const float intensity = 1.0;
+        const float smooth = 0.15;
+        const float bright = 0.85;
         
-        const float3 sunCol1 = float3(1.0, 0.5, 0.4);
-        const float3 sunCol2 = float3(1.0, 0.8, 0.7);
-        float sunDot = max(dot(rd, sunDir), 0.0);
-        
-        sky += 0.5 * sunCol1 * pow(sunDot, 30.0);
-        sky += 4.0 * sunCol2 * pow(sunDot, 300.0);
+        float2 st = (uv - angle) * float2(0.5 + (uv.y + 0.1) * 0.31, 0.02) + float2(uniforms.time * 0.5 + uv.y * 0.2, uniforms.time * 0.2);
+        float f = noise(st * 200.5) * noise(st * 120.5) * intensity;
+        f = pow(abs(f), 15.0) * 5.0 * (rain * 125.0);
+        f = clamp(f, 0.0, (uv.y + 0.05) * smooth);
+        sky = mix(sky, float3(bright), f);
     }
 #endif
     
