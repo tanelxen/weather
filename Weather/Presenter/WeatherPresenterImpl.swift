@@ -20,15 +20,19 @@ final class WeatherPresenterImpl: WeatherPresenter {
     }
     
     func loadData() {
-
+        Task {
+            await view?.update(with: .loading)
+            await loadWeather()
+        }
+    }
+    
+    func refresh() {
         Task {
             await loadWeather()
         }
     }
     
     private func loadWeather() async {
-        
-        await view?.update(with: .loading)
         
         let coords = await locationService.getCurrentLocation().coordinate
         

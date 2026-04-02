@@ -108,21 +108,22 @@ final class WeatherViewController: UIViewController {
         
         // Обновляем данные при возврате в foreground
         let notificationCenter = NotificationCenter.default
-        notificationCenter.addObserver(self, selector: #selector(appDidBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(willEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
         
+        // Секретное меню
         let tap = UILongPressGestureRecognizer(target: self, action: #selector(showSettings))
         tap.minimumPressDuration = 1.0
         currentView.addGestureRecognizer(tap)
         currentView.isUserInteractionEnabled = true
     }
     
-    @objc private func appDidBecomeActive() {
+    @objc private func willEnterForeground() {
         presenter.loadData()
     }
     
     @objc private func refresh() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            self.presenter.loadData()
+            self.presenter.refresh()
         }
     }
     
@@ -147,9 +148,7 @@ final class WeatherViewController: UIViewController {
 extension WeatherViewController: WeatherView {
     func update(with state: WeatherViewState) {
         switch state {
-            case .loading:
-                if refreshControl.isRefreshing { break }
-                showLoading()
+            case .loading: showLoading()
             case .success(let vm): showSuccess(vm)
             case .error(let vm): showAlert(vm)
         }
