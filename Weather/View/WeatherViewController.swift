@@ -159,7 +159,9 @@ extension WeatherViewController: WeatherView {
     private func showSuccess(_ vm: WeatherViewModel) {
         
         skyView?.sunHeight = vm.current.isDay ? 1 : 0
-        skyView?.cloudiness = vm.current.cloudiness
+        skyView?.cloudiness = vm.current.shaderParams.cloud
+        skyView?.raininess = vm.current.shaderParams.rain
+        skyView?.snowiness = vm.current.shaderParams.snow
         
         viewModel = vm
         currentView.configure(with: vm.current)

@@ -64,13 +64,25 @@ private func makeViewModel(from data: ForecastResponse) -> WeatherViewModel {
         temp: String(format: "%.0f°", data.current.temp_c),
         condition: data.current.condition.text,
         isDay: data.current.is_day == 1,
-        cloudiness: Float(data.current.cloud) * 0.01
+        shaderParams: WeatherShaderParams.make(from: data.current.condition.code)
     )
     
-    let now = Int(Date().timeIntervalSince1970)
+    let showCurrentHour = true
+    let capTo24Hours = true
+    
+    let now = Int(Date().timeIntervalSince1970) - (showCurrentHour ? 3599 : 0)
     let hours = data.forecast.forecastday.prefix(2).flatMap(\.hour)
-    let filtered = hours.filter { $0.time_epoch > now }//.prefix(24)
-    let hourlyItems: [WeatherViewModel.HourlyItem] = filtered.map { .init(from: $0) }
+    
+    var filtered = hours.filter { $0.time_epoch > now }
+    if capTo24Hours {
+        filtered = Array(filtered.prefix(24))
+    }
+    
+    var hourlyItems: [WeatherViewModel.HourlyItem] = filtered.map { .init(from: $0) }
+    
+    if showCurrentHour, !hourlyItems.isEmpty {
+        hourlyItems[0].time = "Сейчас"
+    }
     
     let dailyItems: [WeatherViewModel.DailyItem] = data.forecast.forecastday.map { .init(from: $0) }
     let dailyTitle = "Прогноз на " + pluralizeDays(dailyItems.count)

@@ -68,7 +68,7 @@ final class SkySettingsViewController: UIViewController
         
         stackView.addArrangedSubview(wrap(for: "Время суток", sunHeightSlider))
         stackView.addArrangedSubview(wrap(for: "Облачность", cloudinessSlider))
-//        stackView.addArrangedSubview(wrap(for: "Дождливость", raininessSlider))
+        stackView.addArrangedSubview(wrap(for: "Дождливость", raininessSlider))
     }
     
     private func configurate()

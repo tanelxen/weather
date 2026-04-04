@@ -27,7 +27,7 @@ struct WeatherViewModel {
         let temp: String
         let condition: String
         let isDay: Bool
-        let cloudiness: Float
+        let shaderParams: WeatherShaderParams
     }
     
     struct Hourly {
@@ -36,7 +36,7 @@ struct WeatherViewModel {
     }
     
     struct HourlyItem {
-        let time: String
+        var time: String
         let temp: String
         let iconUrl: String
     }
