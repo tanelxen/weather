@@ -44,8 +44,8 @@ final class WeatherPresenterImpl: WeatherPresenter {
             
         } catch {
             
-            if let weatherError = error as? WeatherError, case .apiError(let code, _) = weatherError {
-                let message = (code == 2006) ? "Удостоверьтесь, что у вас валидный API-ключ" : error.localizedDescription
+            if let weatherError = error as? WeatherError, case .apiError(let code, _) = weatherError, code == 2006 {
+                let message = "Удостоверьтесь, что у вас валидный API-ключ"
                 let vm = AlertViewModel(title: "Что-то пошло не так", message: message, isRetriable: false)
                 await view?.update(with: .error(vm))
                 return
@@ -78,13 +78,18 @@ private func makeViewModel(from data: ForecastResponse) -> WeatherViewModel {
         filtered = Array(filtered.prefix(24))
     }
     
-    var hourlyItems: [WeatherViewModel.HourlyItem] = filtered.map { .init(from: $0) }
+    let timeZone = TimeZone(identifier: data.location.tz_id)!
+    
+    var hourlyItems: [WeatherViewModel.HourlyItem] = filtered.map { .init(from: $0, timeZone: timeZone) }
     
     if showCurrentHour, !hourlyItems.isEmpty {
         hourlyItems[0].time = "Сейчас"
     }
     
-    let dailyItems: [WeatherViewModel.DailyItem] = data.forecast.forecastday.map { .init(from: $0) }
+    let offset = timeZone.secondsFromGMT()
+    let localGMT = Date(timeIntervalSince1970: TimeInterval(data.location.localtime_epoch + offset))
+    
+    let dailyItems: [WeatherViewModel.DailyItem] = data.forecast.forecastday.map { .init(from: $0, localGMT: localGMT) }
     let dailyTitle = "Прогноз на " + pluralizeDays(dailyItems.count)
     
     return WeatherViewModel(
@@ -118,8 +123,9 @@ private func unixToHour(unixTime: TimeInterval, timeZone: TimeZone = .current) -
 }
 
 private extension WeatherViewModel.HourlyItem {
-    init(from model: WeatherAPI.Hour) {
-        self.time = unixToHour(unixTime: TimeInterval(model.time_epoch))
+    init(from model: WeatherAPI.Hour, timeZone: TimeZone) {
+        let timeInterval = TimeInterval(model.time_epoch)
+        self.time = unixToHour(unixTime: timeInterval, timeZone: timeZone)
         self.temp = String(format: "%.0f°", Double(model.temp_c))
         self.iconUrl = "https:" + model.condition.icon
     }
@@ -127,16 +133,21 @@ private extension WeatherViewModel.HourlyItem {
 
 private extension WeatherViewModel.DailyItem
 {
-    init(from model: WeatherAPI.ForecastDay)
+    init(from model: WeatherAPI.ForecastDay, localGMT: Date)
     {
         let date = Date(timeIntervalSince1970: TimeInterval(model.date_epoch))
-        let isDateInToday = Calendar.current.isDateInToday(date)
         
         let dateFormatter = DateFormatter()
         dateFormatter.locale = Locale(identifier: "ru")
+        dateFormatter.timeZone = TimeZone(secondsFromGMT: 0)!
         dateFormatter.dateFormat = "EEE"
         
-        self.day = isDateInToday ? "Сегодня" : dateFormatter.string(from: date)
+        var utcCalendar = Calendar(identifier: .gregorian)
+        utcCalendar.timeZone = TimeZone(secondsFromGMT: 0)!
+        
+        let isToday = utcCalendar.isDate(date, inSameDayAs: localGMT)
+        
+        self.day = isToday ? "Сегодня" : dateFormatter.string(from: date)
         
         self.temp = String(format: "%3.0f°  | %3.0f°", model.day.mintemp_c, model.day.maxtemp_c)
         

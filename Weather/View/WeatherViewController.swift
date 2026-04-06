@@ -86,7 +86,7 @@ final class WeatherViewController: UIViewController {
     private func configure() {
         view.backgroundColor = .systemBackground
         
-        collectionView.contentInset.top = 64
+        collectionView.contentInset.top = 96
         collectionView.showsHorizontalScrollIndicator = false
         collectionView.showsVerticalScrollIndicator = false
         collectionView.backgroundColor = .clear
