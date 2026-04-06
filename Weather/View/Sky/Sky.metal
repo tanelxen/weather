@@ -97,6 +97,20 @@ fragment float4 skyFragmentShader
         sky += starColor * s * horizonFade * starMask * 5;
     }
     
+    if (uniforms.sunHeight <= 0)
+    {
+        float2 sundir = float2(0.25, 0.65);
+        float2 moonPos = uv - sundir;
+        
+        float glow = 0.95 * exp(-length(moonPos) * 6.0);
+        sky += glow;
+        
+        float moon = smoothstep(0.09, 0.08, length(moonPos));
+        float col = 0.5 + fbm(16.0 * moonPos + 1.2);
+        sky = mix(sky, float3(col), moon);
+        sky = saturate(sky);
+    }
+    
     {
         float3 color = clouds(sky, uv, uniforms.time, noiseMap);
         half horizonFade = smoothstep(-0.2, 0.3, viewDir.y);
