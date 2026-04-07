@@ -6,14 +6,12 @@
 //
 
 #include <metal_stdlib>
-
 #include "Common.h"
-#include "Clouds.h"
-#include "Stars.h"
 
 using namespace metal;
 
 #define RAIN 1
+#define SNOW 1
 
 struct VertexOut {
     float4 position [[position]];
@@ -26,15 +24,8 @@ struct SkyUniforms {
     float sunHeight;
     float cloudiness;
     float raininess;
+    uint snowiness;
 };
-
-constexpr sampler sampler2d(min_filter::linear, mag_filter::linear, address::repeat);
-
-static float noise(float2 p, texture2d<half> noiseMap)
-{
-    half4 tex = noiseMap.sample(sampler2d, p/32.0);
-    return tex.r;
-}
 
 vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
 {
@@ -130,6 +121,17 @@ fragment float4 skyFragmentShader
         f = pow(abs(f), 15.0) * 625.0 * rain;
         f = clamp(f, 0.0, uv.y * smooth);
         sky = mix(sky, float3(bright), f);
+    }
+#endif
+    
+#if SNOW
+    if (uniforms.snowiness > 0)
+    {
+        uv = in.texCoord;
+        uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
+        
+        float snow = snowing(uv, uniforms.time, uniforms.snowiness);
+        sky += snow;
     }
 #endif
     

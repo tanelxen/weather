@@ -44,4 +44,8 @@ float fbm(float2 p)
     return value;
 }
 
+float3 clouds(float3 col, float2 uv, float time, texture2d<half> map);
+float stars(float2 uv, float time);
+float snowing(float2 uv, float time, int count);
+
 #endif

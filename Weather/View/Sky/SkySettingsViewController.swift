@@ -42,6 +42,13 @@ final class SkySettingsViewController: UIViewController
         return slider
     }()
     
+    private let snowinessSlider: UISlider = {
+        let slider = UISlider()
+        slider.minimumValue = 0
+        slider.maximumValue = 1
+        return slider
+    }()
+    
     init(delegate: SkyViewProtocol) {
         self.delegate = delegate
         super.init(nibName: nil, bundle: nil)
@@ -69,35 +76,44 @@ final class SkySettingsViewController: UIViewController
         stackView.addArrangedSubview(wrap(for: "Время суток", sunHeightSlider))
         stackView.addArrangedSubview(wrap(for: "Облачность", cloudinessSlider))
         stackView.addArrangedSubview(wrap(for: "Дождливость", raininessSlider))
+        stackView.addArrangedSubview(wrap(for: "Снежность", snowinessSlider))
     }
     
     private func configurate()
     {
         view.backgroundColor = .white
         
-        sunHeightSlider.addTarget(self, action: #selector(didChangeSunHeight), for: .valueChanged)
+        sunHeightSlider.addTarget(self, action: #selector(didChangeSliderValue), for: .valueChanged)
         sunHeightSlider.value = delegate.sunHeight
         
-        cloudinessSlider.addTarget(self, action: #selector(didChangeCloudiness), for: .valueChanged)
+        cloudinessSlider.addTarget(self, action: #selector(didChangeSliderValue), for: .valueChanged)
         cloudinessSlider.value = delegate.cloudiness
         
-        raininessSlider.addTarget(self, action: #selector(didChangeRaininess), for: .valueChanged)
+        raininessSlider.addTarget(self, action: #selector(didChangeSliderValue), for: .valueChanged)
         raininessSlider.value = delegate.raininess
+        
+        snowinessSlider.addTarget(self, action: #selector(didChangeSliderValue), for: .valueChanged)
+        snowinessSlider.value = delegate.snowiness
     }
     
-    @objc private func didChangeSunHeight(_ sender: UISlider)
+    @objc private func didChangeSliderValue(_ sender: UISlider)
     {
-        delegate.sunHeight = sender.value
-    }
-    
-    @objc private func didChangeCloudiness(_ sender: UISlider)
-    {
-        delegate.cloudiness = sender.value
-    }
-    
-    @objc private func didChangeRaininess(_ sender: UISlider)
-    {
-        delegate.raininess = sender.value
+        switch sender {
+            case sunHeightSlider:
+                delegate.sunHeight = sender.value
+                
+            case cloudinessSlider:
+                delegate.cloudiness = sender.value
+                
+            case raininessSlider:
+                delegate.raininess = sender.value
+                
+            case snowinessSlider:
+                delegate.snowiness = sender.value
+                
+            default:
+                break
+        }
     }
 }
 

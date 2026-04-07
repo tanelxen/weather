@@ -28,8 +28,8 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
     private var startTime: TimeInterval = 0
     
     var sunHeight: Float = 0.0
-    var cloudiness: Float = 1.0
-    var raininess: Float = 0.5
+    var cloudiness: Float = 0.0
+    var raininess: Float = 0.0
     var snowiness: Float = 0.0
     
     override func loadView() {
@@ -99,7 +99,8 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
             time: Float(currentTime),
             sunHeight: sunHeight,
             cloudiness: cloudiness,
-            raininess: raininess
+            raininess: raininess,
+            snowiness: Int32(snowiness * 12)
         )
         
         renderEncoder.setRenderPipelineState(pipelineState)
@@ -129,4 +130,5 @@ private struct SkyUniforms {
     var sunHeight: Float
     var cloudiness: Float
     var raininess: Float
+    var snowiness: Int32
 }
