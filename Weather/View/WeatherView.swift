@@ -8,27 +8,26 @@
 
 @MainActor
 protocol WeatherView: AnyObject {
-    func update(with: WeatherViewState)
+    func update(with: CurrentWeatherViewModel)
+    func update(with: ForecastWeatherViewModel)
+    
+    func showAlert(_ viewModel: AlertViewModel)
+    
+    func showLoadingIndicator()
+    func hideLoadingIndicator()
 }
 
-enum WeatherViewState {
-    case loading
-    case success(WeatherViewModel)
-    case error(AlertViewModel)
+struct CurrentWeatherViewModel {
+    let city: String
+    let temp: String
+    let condition: String
+    let isDay: Bool
+    let shaderParams: WeatherShaderParams
 }
 
-struct WeatherViewModel {
-    let current: Current
+struct ForecastWeatherViewModel {
     let hourly: Hourly
     let daily: Daily
-    
-    struct Current {
-        let city: String
-        let temp: String
-        let condition: String
-        let isDay: Bool
-        let shaderParams: WeatherShaderParams
-    }
     
     struct Hourly {
         let header: String

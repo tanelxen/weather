@@ -8,7 +8,13 @@
 import Foundation
 
 protocol WeatherClient {
+    func getCurrent(latitude: Double, longitude: Double) async throws -> CurrentResponse
     func getForecast(latitude: Double, longitude: Double, days: Int) async throws -> ForecastResponse
+}
+
+struct CurrentResponse: Decodable {
+    let location: WeatherAPI.Location
+    let current: WeatherAPI.Current
 }
 
 struct ForecastResponse: Decodable {

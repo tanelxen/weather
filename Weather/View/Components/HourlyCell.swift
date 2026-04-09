@@ -69,7 +69,7 @@ final class HourlyCell: UICollectionViewCell {
         }
     }
     
-    func configure(with model: WeatherViewModel.HourlyItem) {
+    func configure(with model: ForecastWeatherViewModel.HourlyItem) {
         timeLabel.text = model.time
         tempLabel.text = model.temp
         imageView.loadImage(from: model.iconUrl)

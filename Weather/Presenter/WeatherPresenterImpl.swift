@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import CoreLocation
 
 final class WeatherPresenterImpl: WeatherPresenter {
     
@@ -14,6 +15,8 @@ final class WeatherPresenterImpl: WeatherPresenter {
     private let weatherClient: WeatherClient
     private let locationService: LocationService
     
+    private var lastLocation: CLLocation?
+    
     init(weatherClient: WeatherClient, locationService: LocationService) {
         self.weatherClient = weatherClient
         self.locationService = locationService
@@ -21,79 +24,119 @@ final class WeatherPresenterImpl: WeatherPresenter {
     
     func loadData() {
         Task {
-            await view?.update(with: .loading)
-            await loadWeather()
+            await view?.showLoadingIndicator()
+            
+            let location = await locationService.getCurrentLocation()
+            await loadForecast(with: location.coordinate)
+            
+            lastLocation = location
         }
     }
     
     func refresh() {
         Task {
-            await loadWeather()
+            let location = await locationService.getCurrentLocation()
+            
+            if let lastLocation, lastLocation.distance(from: location) < 1000 {
+                await loadCurrent(with: location.coordinate)
+            } else {
+                await loadForecast(with: location.coordinate)
+            }
+            
+            lastLocation = location
         }
     }
     
-    private func loadWeather() async {
+    private func loadCurrent(with coords: CLLocationCoordinate2D) async {
         
-        let coords = await locationService.getCurrentLocation().coordinate
+        do {
+            let data = try await weatherClient.getCurrent(latitude: coords.latitude, longitude: coords.longitude)
+            
+            await view?.hideLoadingIndicator()
+            
+            let current = makeViewModel(from: data.current, location: data.location)
+            await view?.update(with: current)
+            
+        } catch {
+            await processError(error)
+        }
+    }
+    
+    private func loadForecast(with coords: CLLocationCoordinate2D) async {
         
         do {
             let data = try await weatherClient.getForecast(latitude: coords.latitude, longitude: coords.longitude, days: 3)
             
-            let vm = makeViewModel(from: data)
-            await view?.update(with: .success(vm))
+            await view?.hideLoadingIndicator()
+            
+            let current = makeViewModel(from: data.current, location: data.location)
+            await view?.update(with: current)
+            
+            let forecast = makeViewModel(from: data.forecast, location: data.location)
+            await view?.update(with: forecast)
             
         } catch {
-            
-            if let weatherError = error as? WeatherError, case .apiError(let code, _) = weatherError, code == 2006 {
-                let message = "Удостоверьтесь, что у вас валидный API-ключ"
-                let vm = AlertViewModel(title: "Что-то пошло не так", message: message, isRetriable: false)
-                await view?.update(with: .error(vm))
-                return
-            }
-            
-            let vm = AlertViewModel(title: "Что-то пошло не так", message: error.localizedDescription, isRetriable: true)
-            await view?.update(with: .error(vm))
+            await processError(error)
         }
+    }
+    
+    private func processError(_ error: Error) async {
+        
+        await view?.hideLoadingIndicator()
+        
+        let apiKeyCodes: Set<Int> = [1002, 2006, 2007, 2008]
+        
+        if let weatherError = error as? WeatherError, case .apiError(let code, _) = weatherError, apiKeyCodes.contains(code) {
+            let message = "Удостоверьтесь, что у вас валидный API-ключ"
+            let vm = AlertViewModel(title: "Что-то пошло не так", message: message, isRetriable: false)
+            await view?.showAlert(vm)
+            return
+        }
+        
+        let vm = AlertViewModel(title: "Что-то пошло не так", message: error.localizedDescription, isRetriable: true)
+        await view?.showAlert(vm)
     }
 }
 
-private func makeViewModel(from data: ForecastResponse) -> WeatherViewModel {
+private func makeViewModel(from current: WeatherAPI.Current, location: WeatherAPI.Location) -> CurrentWeatherViewModel {
     
-    let current = WeatherViewModel.Current(
-        city: data.location.name,
-        temp: String(format: "%.0f°", data.current.temp_c),
-        condition: data.current.condition.text,
-        isDay: data.current.is_day == 1,
-        shaderParams: WeatherShaderParams.make(from: data.current.condition.code)
+    return CurrentWeatherViewModel(
+        city: location.name,
+        temp: String(format: "%.0f°", current.temp_c),
+        condition: current.condition.text,
+        isDay: current.is_day == 1,
+        shaderParams: WeatherShaderParams.make(from: current.condition.code)
     )
+}
+
+private func makeViewModel(from forecast: WeatherAPI.Forecast, location: WeatherAPI.Location) -> ForecastWeatherViewModel {
     
     let showCurrentHour = true
     let capTo24Hours = true
     
-    let now = Int(Date().timeIntervalSince1970) - (showCurrentHour ? 3599 : 0)
-    let hours = data.forecast.forecastday.prefix(2).flatMap(\.hour)
+    let now = Int(location.localtime_epoch) - (showCurrentHour ? 3599 : 0)
+    let hours = forecast.forecastday.prefix(2).flatMap(\.hour)
     
     var filtered = hours.filter { $0.time_epoch > now }
     if capTo24Hours {
         filtered = Array(filtered.prefix(24))
     }
     
-    let timeZone = TimeZone(identifier: data.location.tz_id)!
+    let timeZone = TimeZone(identifier: location.tz_id)!
     
-    var hourlyItems: [WeatherViewModel.HourlyItem] = filtered.map { .init(from: $0, timeZone: timeZone) }
+    var hourlyItems: [ForecastWeatherViewModel.HourlyItem] = filtered.map { .init(from: $0, timeZone: timeZone) }
     
     if showCurrentHour, !hourlyItems.isEmpty {
         hourlyItems[0].time = "Сейчас"
     }
     
     let offset = timeZone.secondsFromGMT()
-    let localGMT = Date(timeIntervalSince1970: TimeInterval(data.location.localtime_epoch + offset))
+    let localGMT = Date(timeIntervalSince1970: TimeInterval(location.localtime_epoch + offset))
     
-    let dailyItems: [WeatherViewModel.DailyItem] = data.forecast.forecastday.map { .init(from: $0, localGMT: localGMT) }
+    let dailyItems: [ForecastWeatherViewModel.DailyItem] = forecast.forecastday.map { .init(from: $0, localGMT: localGMT) }
     let dailyTitle = "Прогноз на " + pluralizeDays(dailyItems.count)
     
-    return WeatherViewModel(
-        current: current,
+    return ForecastWeatherViewModel(
         hourly: .init(header: "Почасовой прогноз", items: hourlyItems),
         daily: .init(header: dailyTitle, items: dailyItems)
     )
@@ -122,7 +165,8 @@ private func unixToHour(unixTime: TimeInterval, timeZone: TimeZone = .current) -
     return dateFormatter.string(from: date)
 }
 
-private extension WeatherViewModel.HourlyItem {
+private extension ForecastWeatherViewModel.HourlyItem {
+    
     init(from model: WeatherAPI.Hour, timeZone: TimeZone) {
         let timeInterval = TimeInterval(model.time_epoch)
         self.time = unixToHour(unixTime: timeInterval, timeZone: timeZone)
@@ -131,10 +175,9 @@ private extension WeatherViewModel.HourlyItem {
     }
 }
 
-private extension WeatherViewModel.DailyItem
-{
-    init(from model: WeatherAPI.ForecastDay, localGMT: Date)
-    {
+private extension ForecastWeatherViewModel.DailyItem {
+    
+    init(from model: WeatherAPI.ForecastDay, localGMT: Date) {
         let date = Date(timeIntervalSince1970: TimeInterval(model.date_epoch))
         
         let dateFormatter = DateFormatter()

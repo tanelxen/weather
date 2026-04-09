@@ -19,30 +19,34 @@ extension WeatherViewController: UICollectionViewDataSource {
     
     func collectionView(_ collectionView: UICollectionView, numberOfItemsInSection section: Int) -> Int {
         
-        guard let viewModel else { return 0 }
-        
         switch SectionType(rawValue: section) {
-            case .hourly: return viewModel.hourly.items.count
-            case .daily: return viewModel.daily.items.count
+            case .hourly: return hourly?.items.count ?? 0
+            case .daily: return daily?.items.count ?? 0
             case .none: return 0
         }
     }
     
     func collectionView(_ collectionView: UICollectionView, cellForItemAt indexPath: IndexPath) -> UICollectionViewCell {
         
-        guard let viewModel else { return UICollectionViewCell() }
-        
         switch SectionType(rawValue: indexPath.section) {
             case .hourly:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: HourlyCell.identifier, for: indexPath) as! HourlyCell
-                let hour = viewModel.hourly.items[indexPath.item]
-                cell.configure(with: hour)
+                
+                if let items = hourly?.items, indexPath.item < items.count {
+                    let hour = items[indexPath.item]
+                    cell.configure(with: hour)
+                }
+                
                 return cell
                 
             case .daily:
                 let cell = collectionView.dequeueReusableCell(withReuseIdentifier: DailyCell.identifier, for: indexPath) as! DailyCell
-                let day = viewModel.daily.items[indexPath.item]
-                cell.configure(with: day)
+                
+                if let items = daily?.items, indexPath.item < items.count {
+                    let day = items[indexPath.item]
+                    cell.configure(with: day)
+                }
+
                 return cell
                 
             case .none: return UICollectionViewCell()
@@ -55,8 +59,12 @@ extension WeatherViewController: UICollectionViewDataSource {
         let header = collectionView.dequeueReusableSupplementaryView(ofKind: kind, withReuseIdentifier: "SectionHeader", for: indexPath) as! SectionHeaderView
         
         switch SectionType(rawValue: indexPath.section) {
-            case .hourly: header.title = viewModel?.hourly.header
-            case .daily: header.title = viewModel?.daily.header
+            case .hourly:
+                header.iconSystemName = "clock"
+                header.title = hourly?.header
+            case .daily:
+                header.iconSystemName = "calendar"
+                header.title = daily?.header
             case .none: break
         }
         

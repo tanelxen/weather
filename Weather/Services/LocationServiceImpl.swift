@@ -19,9 +19,16 @@ final class LocationServiceImpl: NSObject {
         super.init()
         
         manager.desiredAccuracy = kCLLocationAccuracyKilometer
+        manager.distanceFilter = kCLLocationAccuracyKilometer
         manager.pausesLocationUpdatesAutomatically = true
         manager.allowsBackgroundLocationUpdates = false
         manager.delegate = self
+    }
+    
+    private func resume(with location: CLLocation) {
+        manager.stopUpdatingLocation()
+        continuation?.resume(returning: location)
+        continuation = nil
     }
 }
 
@@ -33,13 +40,15 @@ extension LocationServiceImpl: LocationService {
             self.continuation = continuation
             
             let status = manager.authorizationStatus
-            if status == .notDetermined {
-                manager.requestWhenInUseAuthorization()
-            } else if status == .denied || status == .restricted {
-                continuation.resume(returning: defaultLocation)
-                self.continuation = nil
-            } else {
-                manager.startUpdatingLocation()
+            switch status {
+                case .notDetermined:
+                    manager.requestWhenInUseAuthorization()
+                case .denied, .restricted:
+                    resume(with: defaultLocation)
+                case .authorizedWhenInUse, .authorizedAlways:
+                    manager.startUpdatingLocation()
+                @unknown default:
+                    resume(with: defaultLocation)
             }
         }
     }
@@ -48,25 +57,22 @@ extension LocationServiceImpl: LocationService {
 extension LocationServiceImpl: CLLocationManagerDelegate {
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
-        if let location = locations.first {
-            manager.stopUpdatingLocation()
-            continuation?.resume(returning: location)
-            continuation = nil
+        if let location = locations.last {
+            resume(with: location)
         }
     }
     
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        manager.stopUpdatingLocation()
-        continuation?.resume(returning: defaultLocation)
-        continuation = nil
+        resume(with: defaultLocation)
     }
     
     func locationManagerDidChangeAuthorization(_ manager: CLLocationManager) {
-        if manager.authorizationStatus == .authorizedWhenInUse || manager.authorizationStatus == .authorizedAlways {
+        let status = manager.authorizationStatus
+        
+        if (status == .authorizedWhenInUse || status == .authorizedAlways) && continuation != nil {
             manager.startUpdatingLocation()
-        } else if manager.authorizationStatus == .denied {
-            continuation?.resume(returning: defaultLocation)
-            continuation = nil
+        } else if status == .denied {
+            resume(with: defaultLocation)
         }
     }
 }

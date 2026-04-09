@@ -31,7 +31,11 @@ final class WeatherViewController: UIViewController {
     private let errorView = ErrorView()
     
     private let presenter: WeatherPresenter
-    private(set) var viewModel: WeatherViewModel?
+    private(set) var hourly: ForecastWeatherViewModel.Hourly?
+    private(set) var daily: ForecastWeatherViewModel.Daily?
+    
+    private var backgroundDate: Date?
+    private let refreshInterval: TimeInterval = 60 * 5 // 5 минут
     
     init(presenter: WeatherPresenter) {
         self.presenter = presenter
@@ -47,6 +51,8 @@ final class WeatherViewController: UIViewController {
         
         layout()
         configure()
+        
+        presenter.loadData()
     }
     
     private func layout() {
@@ -108,7 +114,8 @@ final class WeatherViewController: UIViewController {
         
         // Обновляем данные при возврате в foreground
         let notificationCenter = NotificationCenter.default
-        notificationCenter.addObserver(self, selector: #selector(willEnterForeground), name: UIApplication.willEnterForegroundNotification, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(didBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
         
         // Секретное меню
         let tap = UILongPressGestureRecognizer(target: self, action: #selector(showSettings))
@@ -117,8 +124,18 @@ final class WeatherViewController: UIViewController {
         currentView.isUserInteractionEnabled = true
     }
     
-    @objc private func willEnterForeground() {
-        presenter.loadData()
+    @objc private func didEnterBackground() {
+        backgroundDate = Date()
+    }
+    
+    @objc private func didBecomeActive() {
+        guard let backgroundDate else { return }
+        
+        let timeInBackground = Date().timeIntervalSince(backgroundDate)
+        
+        if timeInBackground > refreshInterval {
+            presenter.refresh()
+        }
     }
     
     @objc private func refresh() {
@@ -146,32 +163,30 @@ final class WeatherViewController: UIViewController {
 }
 
 extension WeatherViewController: WeatherView {
-    func update(with state: WeatherViewState) {
-        switch state {
-            case .loading: showLoading()
-            case .success(let vm): showSuccess(vm)
-            case .error(let vm): showAlert(vm)
-        }
-        
-        refreshControl.endRefreshing()
+
+    func showLoadingIndicator() {
+        loaderView.startAnimating()
+        currentView.isHidden = true
+        collectionView.isHidden = true
+        errorView.isHidden = true
     }
     
-    private func showSuccess(_ vm: WeatherViewModel) {
+    func hideLoadingIndicator() {
+        loaderView.stopAnimating()
+        collectionView.refreshControl?.endRefreshing()
+    }
+    
+    func update(with vm: CurrentWeatherViewModel) {
         
-        skyView?.sunHeight = vm.current.isDay ? 1 : 0
-        skyView?.cloudiness = vm.current.shaderParams.cloud
-        skyView?.raininess = vm.current.shaderParams.rain
-        skyView?.snowiness = vm.current.shaderParams.snow
+        skyView?.sunHeight = vm.isDay ? 1 : 0
+        skyView?.cloudiness = vm.shaderParams.cloud
+        skyView?.raininess = vm.shaderParams.rain
+        skyView?.snowiness = vm.shaderParams.snow
         
-        viewModel = vm
-        currentView.configure(with: vm.current)
-        collectionView.reloadData()
-        
+        currentView.configure(with: vm)
         currentView.isHidden = false
-        collectionView.isHidden = false
         
         currentView.alpha = 0
-        collectionView.alpha = 0
         
         UIView.animate(withDuration: 0.3) {
             self.currentView.alpha = 1
@@ -181,19 +196,28 @@ extension WeatherViewController: WeatherView {
             self.collectionView.alpha = 1
         }
         
-        loaderView.stopAnimating()
         errorView.isHidden = true
     }
     
-    private func showLoading() {
-        loaderView.startAnimating()
-        currentView.isHidden = true
-        collectionView.isHidden = true
+    func update(with vm: ForecastWeatherViewModel) {
+        
+        daily = vm.daily
+        hourly = vm.hourly
+        
+        collectionView.refreshControl?.endRefreshing()
+        collectionView.reloadData()
+        
+        collectionView.isHidden = false
+        collectionView.alpha = 0
+        
+        UIView.animate(withDuration: 0.5, delay: 0.2) {
+            self.collectionView.alpha = 1
+        }
+        
         errorView.isHidden = true
     }
     
-    private func showAlert(_ vm: AlertViewModel) {
-        loaderView.stopAnimating()
+    func showAlert(_ vm: AlertViewModel) {
         
         currentView.isHidden = true
         collectionView.isHidden = true

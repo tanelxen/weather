@@ -70,7 +70,7 @@ final class DailyCell: UICollectionViewCell {
         }
     }
     
-    func configure(with model: WeatherViewModel.DailyItem) {
+    func configure(with model: ForecastWeatherViewModel.DailyItem) {
         dayLabel.text = model.day
         tempLabel.text = model.temp
         imageView.loadImage(from: model.iconUrl)

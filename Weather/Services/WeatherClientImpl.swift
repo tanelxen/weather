@@ -29,6 +29,11 @@ final class WeatherClientImpl: WeatherClient {
         self.session = URLSession(configuration: config)
     }
     
+    func getCurrent(latitude: Double, longitude: Double) async throws -> CurrentResponse {
+        let params: [String: String] = ["q": "\(latitude),\(longitude)"]
+        return try await get("current.json", params: params)
+    }
+    
     func getForecast(latitude: Double, longitude: Double, days: Int) async throws -> ForecastResponse {
         let params = ["q": "\(latitude),\(longitude)", "days": "\(days)"]
         return try await get("forecast.json", params: params)

@@ -22,7 +22,7 @@ final class CurrentView: UIView {
         let label = UILabel()
         label.font = .systemFont(ofSize: 64, weight: .light)
         label.textColor = .white
-        label.text = "-°"
+        label.text = "--"
         return label
     }()
     
@@ -31,13 +31,6 @@ final class CurrentView: UIView {
         label.font = .systemFont(ofSize: 18, weight: .regular)
         label.textColor = .white.withAlphaComponent(0.8)
         label.text = "-"
-        return label
-    }()
-    
-    private let rangeLabel: UILabel = {
-        let label = UILabel()
-        label.font = .systemFont(ofSize: 18, weight: .regular)
-        label.textColor = .label
         return label
     }()
     
@@ -61,19 +54,19 @@ final class CurrentView: UIView {
         
         addSubview(tempLabel)
         tempLabel.snp.makeConstraints {
-            $0.top.equalTo(cityLabel.snp.bottom)//.offset(8)
+            $0.top.equalTo(cityLabel.snp.bottom)
             $0.centerX.equalToSuperview().offset(8)
         }
         
         addSubview(conditionLabel)
         conditionLabel.snp.makeConstraints {
-            $0.top.equalTo(tempLabel.snp.bottom)//.offset(8)
+            $0.top.equalTo(tempLabel.snp.bottom)
             $0.bottom.equalToSuperview().inset(32)
             $0.centerX.equalToSuperview()
         }
     }
     
-    func configure(with model: WeatherViewModel.Current) {
+    func configure(with model: CurrentWeatherViewModel) {
         
         cityLabel.text = model.city
         tempLabel.text = model.temp
