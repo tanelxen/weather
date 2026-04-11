@@ -21,7 +21,7 @@ struct CurrentWeatherViewModel {
     let city: String
     let temp: String
     let condition: String
-    let isDay: Bool
+    let dayTime: Int
     let shaderParams: WeatherShaderParams
 }
 

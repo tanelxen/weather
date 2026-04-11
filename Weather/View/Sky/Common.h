@@ -11,6 +11,22 @@
 #include <metal_stdlib>
 using namespace metal;
 
+
+struct VertexOut {
+    float4 position [[position]];
+    float2 texCoord;
+};
+
+struct SkyUniforms {
+    float2 iResolution;
+    float time;
+    float dayTime;
+    float cloudiness;
+    float raininess;
+    uint snowiness;
+};
+
+
 float hash(float2 p)
 {
     return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
@@ -44,8 +60,10 @@ float fbm(float2 p)
     return value;
 }
 
-float3 clouds(float3 col, float2 uv, float time, texture2d<half> map);
+float4 clouds(float4 col, float2 uv, float time, texture2d<half> map);
 float stars(float2 uv, float time);
+
+float rain(float2 uv, float time, float raininess);
 float snowing(float2 uv, float time, int count);
 
 #endif

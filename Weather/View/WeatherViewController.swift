@@ -178,10 +178,13 @@ extension WeatherViewController: WeatherView {
     
     func update(with vm: CurrentWeatherViewModel) {
         
-        skyView?.sunHeight = vm.isDay ? 1 : 0
-        skyView?.cloudiness = vm.shaderParams.cloud
-        skyView?.raininess = vm.shaderParams.rain
-        skyView?.snowiness = vm.shaderParams.snow
+        if let skyView {
+            skyView.dayTime = Float(vm.dayTime)
+            skyView.cloudiness = vm.shaderParams.cloud
+            skyView.raininess = vm.shaderParams.rain
+            skyView.snowiness = vm.shaderParams.snow
+            
+        }
         
         currentView.configure(with: vm)
         currentView.isHidden = false

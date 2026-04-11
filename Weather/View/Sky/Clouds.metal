@@ -72,7 +72,7 @@ static float2 densityGrad(float2 p, float s, float t, texture2d<half> map)
     return float2(cx, cy);
 }
 
-float3 clouds(float3 col, float2 uv, float time, texture2d<half> map)
+float4 clouds(float4 col, float2 uv, float time, texture2d<half> map)
 {
     // center-correct aspect for sampling
     float2 p = uv * 0.75;
@@ -105,25 +105,25 @@ float3 clouds(float3 col, float2 uv, float time, texture2d<half> map)
     
     // Compute simple lighting per layer
     // Using screen-space gradient as a pseudo-normal
-    float3 cloudAlbedo = float3(0.93, 0.94, 0.96); // soft white
-    float3 cloudShadow = float3(0.26, 0.29, 0.33); // bluish gray shadows
+    float4 cloudAlbedo = float4(0.93, 0.94, 0.96, 1.0); // soft white
+    float4 cloudShadow = float4(0.26, 0.29, 0.33, 1.0); // bluish gray shadows
     
     // FAR
     float2 gF = densityGrad(p, sFar,  t*0.30, map);
     float ndlF = clamp(0.5 + 0.5*dot(normalize(float3(-gF,1.0)), L), 0.0, 1.0);
-    float3 cF = mix(cloudShadow, cloudAlbedo, ndlF);
+    float4 cF = mix(cloudShadow, cloudAlbedo, ndlF);
     col = mix(col, cF, dFar * oFar);
     
     // MID
     float2 gM = densityGrad(p, sMid,  t*0.35, map);
     float ndlM = clamp(0.45 + 0.55*dot(normalize(float3(-gM,1.0)), L), 0.0, 1.0);
-    float3 cM = mix(cloudShadow*0.96, cloudAlbedo, ndlM);
+    float4 cM = mix(cloudShadow*0.96, cloudAlbedo, ndlM);
     col = mix(col, cM, dMid * oMid);
     
     // NEAR
     float2 gN = densityGrad(p, sNear, t*0.40, map);
     float ndlN = clamp(0.42 + 0.58*dot(normalize(float3(-gN,1.0)), L), 0.0, 1.0);
-    float3 cN = mix(cloudShadow*0.92, cloudAlbedo, ndlN);
+    float4 cN = mix(cloudShadow*0.92, cloudAlbedo, ndlN);
     col = mix(col, cN, dNear * oNear);
     
     return col;

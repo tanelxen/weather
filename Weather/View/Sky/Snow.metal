@@ -33,5 +33,8 @@ float snowing(float2 uv, float time, int count)
         float edge = 0.05 +0.05*min(.5*abs(fi-5.0),1.);
         acc += smoothstep(edge,-edge,d)*(r.x/(1.+.02*fi*depth));
     }
+    
+//    acc = clamp(acc, 0.0, (1.0 - 0.5 * uv.y) * 0.4);
+    
     return acc;
 }

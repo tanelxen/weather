@@ -10,22 +10,10 @@
 
 using namespace metal;
 
-#define RAIN 1
-#define SNOW 1
+#define RAIN 0
+#define SNOW 0
 
-struct VertexOut {
-    float4 position [[position]];
-    float2 texCoord;
-};
 
-struct SkyUniforms {
-    float2 iResolution;
-    float time;
-    float sunHeight;
-    float cloudiness;
-    float raininess;
-    uint snowiness;
-};
 
 vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
 {
@@ -48,104 +36,147 @@ vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
 }
 
 
-float3 skyGradient(float y, float timeOfDay)
+float3 skyGradient(float2 uv, float hour)
 {
+    float dayFraction = fract(hour / 24.0);
+    
+    const float sunraiseTime = (6.0 / 24.0);
+    const float sunsetTime = (18.0 / 24.0);
+    const float duration = (2.0 / 24.0);
+    
     float3 dayTop = float3(0.2, 0.4, 0.8);
     float3 dayBottom = float3(0.6, 0.8, 1.0);
+    float3 sunsetColor = float3(1.0, 0.0, 0.0);
     
-    float3 nightTop = float3(10.0/255, 8.0/255, 32.0/255);
-    float3 nightBottom = float3(40.0/255, 60.0/255, 100.0/255);
+    float sunraiseScatter = 1.0 - smoothstep(sunraiseTime - duration * 0.5, sunraiseTime + duration * 0.5, dayFraction);
+    float sunsetScatter = smoothstep(sunsetTime - duration * 0.5, sunsetTime + duration * 0.5, dayFraction);
+    float scatter = (sunraiseScatter + sunsetScatter) * 0.5;
     
-    float t = smoothstep(0.0, 1.0, sin(timeOfDay));
+    float3 scatterColor = mix(dayBottom, sunsetColor, scatter);
     
-    float3 top = mix(nightTop, dayTop, t);
-    float3 bottom = mix(nightBottom, dayBottom, t);
+    float atmosphere = pow(uv.y, 2);
+    float3 day = mix(dayTop, scatterColor, atmosphere);
     
-    return mix(bottom, top, y);
+    float3 nightTop = float3(0.04, 0.03, 0.13);
+    float3 nightBottom = float3(0.16, 0.24, 0.39);
+    float3 night = mix(nightTop, nightBottom, uv.y);
+    
+    float sunrise = smoothstep(sunraiseTime - duration * 0.5, sunraiseTime, dayFraction);
+    float sunset = 1.0 - smoothstep(sunsetTime, sunsetTime + duration * 0.5, dayFraction);
+    float t = sunrise * sunset;
+    
+    return mix(night, day, t);
 }
 
 fragment float4 skyFragmentShader
 (
-    VertexOut in [[stage_in]],
-    constant SkyUniforms &uniforms [[ buffer(0) ]],
-    texture2d<half> noiseMap [[ texture(0) ]]
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]]
 )
 {
-    float2 uv = in.texCoord * 2.0 - 1.0;
-    uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
+    float2 uv = in.position.xy / uniforms.iResolution;
     
-    float3 viewDir = normalize(float3(uv, 1.0));
-
+    float3 sky = skyGradient(uv, uniforms.dayTime);
     
-    float3 sky = skyGradient(viewDir.y * 0.5 + 0.5, uniforms.sunHeight);
+    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
     
     {
         float s = stars(uv, uniforms.time);
-        float horizonFade = smoothstep(-0.5, 0.5, viewDir.y);
-        float3 starColor = float3(1.0);
-        float dayFactor = smoothstep(-0.1, 0.2, uniforms.sunHeight);
-        float starMask = 1.0 - dayFactor;
-        sky += starColor * s * horizonFade * starMask * 5;
+        s += stars(uv * 0.5 + 0.4, uniforms.time * 0.9);
+        
+        float horizonFade = 1.0 - smoothstep(0.5, 2.0, uv.y);
+        
+        float dayFraction = fract(uniforms.dayTime / 24.0);
+        float beforeSunraise = 1.0 - smoothstep(0.2, 0.25, dayFraction);
+        float afterSunset = smoothstep(0.75, 0.8, dayFraction);
+        float t = beforeSunraise + afterSunset;
+        
+        sky += float3(1.0) * s * horizonFade * t * 2;
+        sky = saturate(sky);
     }
     
-    if (uniforms.sunHeight <= 0)
+    float dayFraction = fract(uniforms.dayTime / 24.0);
+    
     {
-        float2 sundir = float2(0.25, 0.65);
-        float2 moonPos = uv - sundir;
+        float a = dayFraction * 2 * 3.14 + 3.14;
+        float x = 0.5 + sin(a) * 1.0;
+        float y = 1.75 - cos(a) * 1.5;
         
-        float glow = 0.95 * exp(-length(moonPos) * 6.0);
+        float2 sunPos = float2(x, y);
+        float2 sunDir = uv - sunPos;
+        
+        float d = length(sunDir) * 13.0;
+        float sun = 1.0 / (d * d);
+        
+        sky = mix(sky, float3(1.0, 1.0, 0.9), sun);
+    }
+    
+    {
+        float a = dayFraction * 2 * 3.14;
+        float x = 0.5 + sin(a) * 1.0;
+        float y = 1.75 - cos(a) * 1.5;
+        
+        float2 moonPos = float2(x, y);
+        float2 moonDir = uv - moonPos;
+        
+        float glow = 0.95 * exp(-length(moonDir) * 6.0);
         sky += glow;
         
-        float moon = smoothstep(0.09, 0.08, length(moonPos));
-        float col = 0.5 + fbm(16.0 * moonPos + 1.2);
+        float moon = smoothstep(0.09, 0.08, length(moonDir));;
+        float col = 0.5 + fbm(16.0 * moonDir + 1.2);
         sky = mix(sky, float3(col), moon);
         sky = saturate(sky);
     }
     
-    {
-        float3 color = clouds(sky, uv, uniforms.time, noiseMap);
-        half horizonFade = smoothstep(-0.2, 0.3, viewDir.y);
-        sky = mix(sky, color, uniforms.cloudiness * horizonFade);
-    }
-    
-#if RAIN
-    {
-        const float rain = uniforms.raininess * uniforms.raininess;
-        const float angle = 0.57;
-        const float intensity = 1.1;
-        const float smooth = 0.15;
-        const float bright = 0.8;
-        
-        float2 st = (uv - angle) * float2(0.5 + (uv.y + 0.1) * 0.31, 0.02) + float2(uniforms.time * 0.5 + uv.y * 0.2, uniforms.time * 0.2);
-        float f = noise(st * 200.5) * noise(st * 120.5) * intensity;
-        f = pow(abs(f), 15.0) * 625.0 * rain;
-        f = clamp(f, 0.0, uv.y * smooth);
-        sky = mix(sky, float3(bright), f);
-    }
-#endif
-    
-#if SNOW
-    if (uniforms.snowiness > 0)
-    {
-        uv = in.texCoord;
-        uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
-        
-        float snow = snowing(uv, uniforms.time, uniforms.snowiness);
-        sky += snow;
-    }
-#endif
-    
-//    float fogOffset = 0.7;
-//    float fogIntensity = 0.8;
-//    float fog = exp(-max(viewDir.y + fogOffset, 0.0) * 1.2) * fogIntensity;
-//    float3 fogColor = float3(0.6, 0.8, 0.9);
-//    sky = mix(sky, fogColor, fog);
-    
-//    sky = toneMapped(sky, 1);
-//    sky *= 0.8;
-    
-//    half4 tex = noiseMap.sample(sampler2d, uv);
-//    sky = float3(tex.rgb);
-    
     return float4(sky, 1.0);
+}
+
+
+fragment float4 cloudsFragmentShader
+(
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]],
+ texture2d<half> noiseMap [[ texture(0) ]]
+)
+{
+    float2 uv = in.texCoord;
+    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
+    
+    float horizonFade = smoothstep(0.8, 1.5, uv.y);
+    float4 color = clouds(float4(0), uv * 3, uniforms.time, noiseMap);
+    
+    color *= horizonFade * uniforms.cloudiness;
+    
+    color += float4(0.1, 0.1, 0.1, 0.2 * uniforms.cloudiness);
+    color = saturate(color);
+    
+    return color;
+}
+
+fragment float4 rainFragmentShader
+(
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]]
+)
+{
+    float2 uv = in.texCoord;
+    uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
+    
+    float value = rain(uv, uniforms.time, uniforms.raininess);
+    
+    return float4(1, 1, 1, value);
+}
+
+fragment float4 snowFragmentShader
+(
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]]
+)
+{
+    float2 uv = in.texCoord;
+    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
+    
+    float snow = snowing(uv, uniforms.time, uniforms.snowiness);
+    
+    return float4(1, 1, 1, snow * 1.5);
 }

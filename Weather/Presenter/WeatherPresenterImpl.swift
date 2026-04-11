@@ -100,11 +100,17 @@ final class WeatherPresenterImpl: WeatherPresenter {
 
 private func makeViewModel(from current: WeatherAPI.Current, location: WeatherAPI.Location) -> CurrentWeatherViewModel {
     
+    var calendar = Calendar(identifier: .gregorian)
+    calendar.timeZone = TimeZone(identifier: location.tz_id)!
+    
+    let localDate = Date(timeIntervalSince1970: TimeInterval(location.localtime_epoch))
+    let hour = calendar.component(.hour, from: localDate)
+    
     return CurrentWeatherViewModel(
         city: location.name,
         temp: String(format: "%.0f°", current.temp_c),
         condition: current.condition.text,
-        isDay: current.is_day == 1,
+        dayTime: hour,
         shaderParams: WeatherShaderParams.make(from: current.condition.code)
     )
 }

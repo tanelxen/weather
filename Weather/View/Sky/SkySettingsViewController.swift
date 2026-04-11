@@ -24,7 +24,7 @@ final class SkySettingsViewController: UIViewController
     private let sunHeightSlider: UISlider = {
         let slider = UISlider()
         slider.minimumValue = 0
-        slider.maximumValue = 1
+        slider.maximumValue = 24
         return slider
     }()
     
@@ -84,7 +84,7 @@ final class SkySettingsViewController: UIViewController
         view.backgroundColor = .white
         
         sunHeightSlider.addTarget(self, action: #selector(didChangeSliderValue), for: .valueChanged)
-        sunHeightSlider.value = delegate.sunHeight
+        sunHeightSlider.value = delegate.dayTime
         
         cloudinessSlider.addTarget(self, action: #selector(didChangeSliderValue), for: .valueChanged)
         cloudinessSlider.value = delegate.cloudiness
@@ -100,7 +100,7 @@ final class SkySettingsViewController: UIViewController
     {
         switch sender {
             case sunHeightSlider:
-                delegate.sunHeight = sender.value
+                delegate.dayTime = sender.value
                 
             case cloudinessSlider:
                 delegate.cloudiness = sender.value
