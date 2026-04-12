@@ -161,21 +161,18 @@ private func pluralizeDays(_ count: Int) -> String {
     }
 }
 
-private func unixToHour(unixTime: TimeInterval, timeZone: TimeZone = .current) -> String {
-    let date = Date(timeIntervalSince1970: unixTime)
-    
-    let dateFormatter = DateFormatter()
-    dateFormatter.timeZone = timeZone
-    dateFormatter.dateFormat = "HH"
-    
-    return dateFormatter.string(from: date)
-}
-
 private extension ForecastWeatherViewModel.HourlyItem {
     
     init(from model: WeatherAPI.Hour, timeZone: TimeZone) {
+       
+        let dateFormatter = DateFormatter()
+        dateFormatter.timeZone = timeZone
+        dateFormatter.dateFormat = "HH"
+        
         let timeInterval = TimeInterval(model.time_epoch)
-        self.time = unixToHour(unixTime: timeInterval, timeZone: timeZone)
+        let date = Date(timeIntervalSince1970: timeInterval)
+        
+        self.time = dateFormatter.string(from: date)
         self.temp = String(format: "%.0f°", Double(model.temp_c))
         self.iconUrl = "https:" + model.condition.icon
     }

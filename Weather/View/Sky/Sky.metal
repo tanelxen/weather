@@ -5,15 +5,7 @@
 //  Created by Fedor Artemenkov on 01.04.26.
 //
 
-#include <metal_stdlib>
 #include "Common.h"
-
-using namespace metal;
-
-#define RAIN 0
-#define SNOW 0
-
-
 
 vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
 {
@@ -34,7 +26,6 @@ vertex VertexOut skyVertexShader(uint vertexID [[vertex_id]])
     
     return out;
 }
-
 
 float3 skyGradient(float2 uv, float hour)
 {
@@ -66,6 +57,69 @@ float3 skyGradient(float2 uv, float hour)
     float t = sunrise * sunset;
     
     return mix(night, day, t);
+}
+
+static float hash(float2 p)
+{
+    return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453);
+}
+
+static float noise(float2 p)
+{
+    float2 i = floor(p);
+    float2 f = fract(p);
+    
+    float a = hash(i);
+    float b = hash(i + float2(1, 0));
+    float c = hash(i + float2(0, 1));
+    float d = hash(i + float2(1, 1));
+    
+    return mix(mix(a, b, f.x), mix(c, d, f.x), f.y);
+}
+
+static float fbm(float2 p)
+{
+    float value = 0.0;
+    float amp = 0.5;
+    
+    for (int i = 0; i < 3; i++)
+    {
+        value += noise(p) * amp;
+        p *= 2.1;
+        amp *= 0.55;
+    }
+    
+    return value;
+}
+
+static float starts_noise(float2 x)
+{
+    float xhash = cos( x.x * 37.0 );
+    float yhash = cos( x.y * 47.0 );
+    return fract( 415.92653 * ( xhash + yhash ) );
+}
+
+float stars(float2 uv, float time)
+{
+    float2 grid = uv * 200.0;
+    float2 id = floor(grid);
+    float2 gv = fract(grid) - 0.5;
+    
+    float n = starts_noise(id);
+    
+    float star = smoothstep(0.995, 1.0, n);
+    
+    float d = length(gv);
+    float shape = smoothstep(0.5, 0.0, d);
+    
+    float speed = mix(0.5, 2.0, starts_noise(id + 1.23));
+    float phase = starts_noise(id + 4.56) * 6.2831;
+    
+    float twinkle = sin(time * speed + phase) * sin(time * speed * 0.37 + phase * 1.7);
+    twinkle = twinkle * 0.5 + 0.5;
+    twinkle = pow(twinkle, 2.0);
+    
+    return star * shape * twinkle;
 }
 
 fragment float4 skyFragmentShader
@@ -129,54 +183,4 @@ fragment float4 skyFragmentShader
     }
     
     return float4(sky, 1.0);
-}
-
-
-fragment float4 cloudsFragmentShader
-(
- VertexOut in [[stage_in]],
- constant SkyUniforms &uniforms [[ buffer(0) ]],
- texture2d<half> noiseMap [[ texture(0) ]]
-)
-{
-    float2 uv = in.texCoord;
-    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
-    
-    float horizonFade = smoothstep(0.8, 1.5, uv.y);
-    float4 color = clouds(float4(0), uv * 3, uniforms.time, noiseMap);
-    
-    color *= horizonFade * uniforms.cloudiness;
-    
-    color += float4(0.1, 0.1, 0.1, 0.2 * uniforms.cloudiness);
-    color = saturate(color);
-    
-    return color;
-}
-
-fragment float4 rainFragmentShader
-(
- VertexOut in [[stage_in]],
- constant SkyUniforms &uniforms [[ buffer(0) ]]
-)
-{
-    float2 uv = in.texCoord;
-    uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
-    
-    float value = rain(uv, uniforms.time, uniforms.raininess);
-    
-    return float4(1, 1, 1, value);
-}
-
-fragment float4 snowFragmentShader
-(
- VertexOut in [[stage_in]],
- constant SkyUniforms &uniforms [[ buffer(0) ]]
-)
-{
-    float2 uv = in.texCoord;
-    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
-    
-    float snow = snowing(uv, uniforms.time, uniforms.snowiness);
-    
-    return float4(1, 1, 1, snow * 1.5);
 }

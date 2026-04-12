@@ -5,8 +5,7 @@
 //  Created by Fedor Artemenkov on 07.04.26.
 //
 
-#include <metal_stdlib>
-using namespace metal;
+#include "Common.h"
 
 float snowing(float2 uv, float time, int count)
 {
@@ -34,7 +33,19 @@ float snowing(float2 uv, float time, int count)
         acc += smoothstep(edge,-edge,d)*(r.x/(1.+.02*fi*depth));
     }
     
-//    acc = clamp(acc, 0.0, (1.0 - 0.5 * uv.y) * 0.4);
-    
     return acc;
+}
+
+fragment float4 snowFragmentShader
+(
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]]
+ )
+{
+    float2 uv = in.texCoord;
+    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
+    
+    float snow = snowing(uv, uniforms.time, uniforms.snowiness);
+    
+    return float4(1, 1, 1, snow * 1.5);
 }

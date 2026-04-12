@@ -13,6 +13,8 @@ protocol SkyViewProtocol: AnyObject {
     var cloudiness: Float { set get }
     var raininess: Float { set get }
     var snowiness: Float { set get }
+    
+    var isPaused: Bool { get set }
 }
 
 final class SkyViewController: UIViewController, SkyViewProtocol {
@@ -35,6 +37,16 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
     var cloudiness: Float = 0.0
     var raininess: Float = 0.0
     var snowiness: Float = 0.0
+    
+    var isPaused: Bool {
+        set {
+            mtkView.isPaused = newValue
+        }
+        
+        get {
+            mtkView.isPaused
+        }
+    }
     
     override func loadView() {
         super.loadView()
@@ -70,7 +82,7 @@ final class SkyViewController: UIViewController, SkyViewProtocol {
 
         mtkView.device = MTLCreateSystemDefaultDevice()
         mtkView.clearColor = MTLClearColor(red: 0, green: 0, blue: 0, alpha: 1)
-        mtkView.preferredFramesPerSecond = 60
+        mtkView.preferredFramesPerSecond = 30
         mtkView.enableSetNeedsDisplay = false
         mtkView.framebufferOnly = false
         mtkView.delegate = self

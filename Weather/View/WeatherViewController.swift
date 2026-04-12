@@ -37,6 +37,8 @@ final class WeatherViewController: UIViewController {
     private var backgroundDate: Date?
     private let refreshInterval: TimeInterval = 60 * 5 // 5 минут
     
+    private let animator = CustomAnimator()
+    
     init(presenter: WeatherPresenter) {
         self.presenter = presenter
         super.init(nibName: nil, bundle: nil)
@@ -112,10 +114,9 @@ final class WeatherViewController: UIViewController {
             self?.presenter.loadData()
         }
         
-        // Обновляем данные при возврате в foreground
         let notificationCenter = NotificationCenter.default
-        notificationCenter.addObserver(self, selector: #selector(didEnterBackground), name: UIApplication.didEnterBackgroundNotification, object: nil)
         notificationCenter.addObserver(self, selector: #selector(didBecomeActive), name: UIApplication.didBecomeActiveNotification, object: nil)
+        notificationCenter.addObserver(self, selector: #selector(willResignActive), name: UIApplication.willResignActiveNotification, object: nil)
         
         // Секретное меню
         let tap = UILongPressGestureRecognizer(target: self, action: #selector(showSettings))
@@ -124,17 +125,20 @@ final class WeatherViewController: UIViewController {
         currentView.isUserInteractionEnabled = true
     }
     
-    @objc private func didEnterBackground() {
+    @objc private func willResignActive() {
+        skyView.isPaused = true
         backgroundDate = Date()
     }
     
     @objc private func didBecomeActive() {
-        guard let backgroundDate else { return }
-        
-        let timeInBackground = Date().timeIntervalSince(backgroundDate)
-        
-        if timeInBackground > refreshInterval {
-            presenter.refresh()
+        skyView.isPaused = false
+
+        if let backgroundDate {
+            let timeInBackground = Date().timeIntervalSince(backgroundDate)
+            
+            if timeInBackground > refreshInterval {
+                presenter.refresh()
+            }
         }
     }
     
@@ -179,11 +183,25 @@ extension WeatherViewController: WeatherView {
     func update(with vm: CurrentWeatherViewModel) {
         
         if let skyView {
-            skyView.dayTime = Float(vm.dayTime)
-            skyView.cloudiness = vm.shaderParams.cloud
-            skyView.raininess = vm.shaderParams.rain
-            skyView.snowiness = vm.shaderParams.snow
             
+            let startDayTime = skyView.dayTime
+            let targetDayTime = Float(vm.dayTime)
+            
+            let startCloudiness = skyView.cloudiness
+            let targetCloudiness = vm.shaderParams.cloud
+            
+            let startRaininess = skyView.raininess
+            let targetRaininess = vm.shaderParams.rain
+            
+            let startSnowiness = skyView.snowiness
+            let targetSnowiness = vm.shaderParams.snow
+            
+            animator.animate(duration: 1.0) { [weak self] progress in
+                self?.skyView.dayTime = startDayTime + (targetDayTime - startDayTime) * progress
+                self?.skyView.cloudiness = startCloudiness + (targetCloudiness - startCloudiness) * progress
+                self?.skyView.raininess = startRaininess + (targetRaininess - startRaininess) * progress
+                self?.skyView.snowiness = startSnowiness + (targetSnowiness - startSnowiness) * progress
+            }
         }
         
         currentView.configure(with: vm)

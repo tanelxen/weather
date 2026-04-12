@@ -5,8 +5,7 @@
 //  Created by Fedor Artemenkov on 10.04.26.
 //
 
-#include <metal_stdlib>
-using namespace metal;
+#include "Common.h"
 
 static float hash(float2 p)
 {
@@ -44,4 +43,16 @@ float rain(float2 uv, float time, float raininess)
     return f;
 }
 
-
+fragment float4 rainFragmentShader
+(
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]]
+)
+{
+    float2 uv = in.texCoord;
+    uv.x *= uniforms.iResolution.x / uniforms.iResolution.y;
+    
+    float value = rain(uv, uniforms.time, uniforms.raininess);
+    
+    return float4(1, 1, 1, value);
+}

@@ -85,7 +85,7 @@ private final class SectionBackgroundView: UICollectionReusableView {
         layer.cornerRadius = 16
         clipsToBounds = true
         
-        let blurEffect = UIBlurEffect(style: .systemThinMaterialDark)
+        let blurEffect = UIBlurEffect(style: .systemUltraThinMaterialDark)
         let visualEffectView = UIVisualEffectView(effect: blurEffect)
         
         visualEffectView.translatesAutoresizingMaskIntoConstraints = false

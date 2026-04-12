@@ -5,14 +5,7 @@
 //  Created by Fedor Artemenkov on 04.04.26.
 //
 
-#include <metal_stdlib>
-using namespace metal;
-
-float cloudAlpha(float cloud, float viewY)
-{
-    float horizonFade = smoothstep(-0.2, 0.3, viewY);
-    return cloud * horizonFade * 0.6;
-}
+#include "Common.h"
 
 constexpr sampler sampler2d(min_filter::linear, mag_filter::linear, address::repeat);
 
@@ -127,4 +120,25 @@ float4 clouds(float4 col, float2 uv, float time, texture2d<half> map)
     col = mix(col, cN, dNear * oNear);
     
     return col;
+}
+
+fragment float4 cloudsFragmentShader
+(
+ VertexOut in [[stage_in]],
+ constant SkyUniforms &uniforms [[ buffer(0) ]],
+ texture2d<half> noiseMap [[ texture(0) ]]
+)
+{
+    float2 uv = in.texCoord;
+    uv.y *= uniforms.iResolution.y / uniforms.iResolution.x;
+    
+    float horizonFade = smoothstep(0.8, 1.5, uv.y);
+    float4 color = clouds(float4(0), uv * 3, uniforms.time, noiseMap);
+    
+    color *= horizonFade * uniforms.cloudiness;
+    
+    color += float4(0.1, 0.1, 0.1, 0.2 * uniforms.cloudiness);
+    color = saturate(color);
+    
+    return color;
 }
