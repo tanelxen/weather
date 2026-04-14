@@ -34,9 +34,6 @@ final class WeatherViewController: UIViewController {
     private(set) var hourly: ForecastWeatherViewModel.Hourly?
     private(set) var daily: ForecastWeatherViewModel.Daily?
     
-    private var backgroundDate: Date?
-    private let refreshInterval: TimeInterval = 60 * 5 // 5 минут
-    
     private let animator = CustomAnimator()
     
     init(presenter: WeatherPresenter) {
@@ -53,8 +50,6 @@ final class WeatherViewController: UIViewController {
         
         layout()
         configure()
-        
-        presenter.loadData()
     }
     
     private func layout() {
@@ -127,24 +122,16 @@ final class WeatherViewController: UIViewController {
     
     @objc private func willResignActive() {
         skyView.isPaused = true
-        backgroundDate = Date()
     }
     
     @objc private func didBecomeActive() {
         skyView.isPaused = false
-
-        if let backgroundDate {
-            let timeInBackground = Date().timeIntervalSince(backgroundDate)
-            
-            if timeInBackground > refreshInterval {
-                presenter.refresh()
-            }
-        }
+        presenter.loadData()
     }
     
     @objc private func refresh() {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.8) {
-            self.presenter.refresh()
+            self.presenter.loadData()
         }
     }
     
@@ -180,7 +167,30 @@ extension WeatherViewController: WeatherView {
         collectionView.refreshControl?.endRefreshing()
     }
     
-    func update(with vm: CurrentWeatherViewModel) {
+    func render(_ state: WeatherViewState) {
+        switch state {
+            case .initialLoading:
+                loaderView.startAnimating()
+                currentView.isHidden = true
+                collectionView.isHidden = true
+                errorView.isHidden = true
+                
+            case .refreshing:
+                break
+                
+            case .error(let error):
+                showAlert(error)
+                
+            case .success(let current, let forecast):
+                loaderView.stopAnimating()
+                refreshControl.endRefreshing()
+                errorView.isHidden = true
+                update(with: current)
+                update(with: forecast)
+        }
+    }
+    
+    private func update(with vm: CurrentWeatherViewModel) {
         
         if let skyView {
             
@@ -205,40 +215,36 @@ extension WeatherViewController: WeatherView {
         }
         
         currentView.configure(with: vm)
-        currentView.isHidden = false
         
-        currentView.alpha = 0
-        
-        UIView.animate(withDuration: 0.3) {
-            self.currentView.alpha = 1
+        if currentView.isHidden {
+            currentView.isHidden = false
+            
+            currentView.alpha = 0
+            
+            UIView.animate(withDuration: 0.3) {
+                self.currentView.alpha = 1
+            }
         }
-        
-        UIView.animate(withDuration: 0.5, delay: 0.2) {
-            self.collectionView.alpha = 1
-        }
-        
-        errorView.isHidden = true
     }
     
-    func update(with vm: ForecastWeatherViewModel) {
+    private func update(with vm: ForecastWeatherViewModel) {
         
         daily = vm.daily
         hourly = vm.hourly
         
-        collectionView.refreshControl?.endRefreshing()
         collectionView.reloadData()
         
-        collectionView.isHidden = false
-        collectionView.alpha = 0
-        
-        UIView.animate(withDuration: 0.5, delay: 0.2) {
-            self.collectionView.alpha = 1
+        if collectionView.isHidden {
+            collectionView.isHidden = false
+            collectionView.alpha = 0
+            
+            UIView.animate(withDuration: 0.5, delay: 0.2) {
+                self.collectionView.alpha = 1
+            }
         }
-        
-        errorView.isHidden = true
     }
     
-    func showAlert(_ vm: AlertViewModel) {
+    private func showAlert(_ vm: AlertViewModel) {
         
         currentView.isHidden = true
         collectionView.isHidden = true

@@ -8,13 +8,14 @@
 
 @MainActor
 protocol WeatherView: AnyObject {
-    func update(with: CurrentWeatherViewModel)
-    func update(with: ForecastWeatherViewModel)
-    
-    func showAlert(_ viewModel: AlertViewModel)
-    
-    func showLoadingIndicator()
-    func hideLoadingIndicator()
+    func render(_ state: WeatherViewState)
+}
+
+enum WeatherViewState {
+    case initialLoading
+    case refreshing
+    case success(CurrentWeatherViewModel, ForecastWeatherViewModel)
+    case error(AlertViewModel)
 }
 
 struct CurrentWeatherViewModel {

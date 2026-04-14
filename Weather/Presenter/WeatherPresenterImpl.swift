@@ -17,6 +17,13 @@ final class WeatherPresenterImpl: WeatherPresenter {
     
     private var lastLocation: CLLocation?
     
+    private var location: WeatherAPI.Location?
+    private var current: WeatherAPI.Current?
+    private var forecast: WeatherAPI.Forecast?
+    
+    private var isInitial = true
+    private var currentDay: Int?
+    
     init(weatherClient: WeatherClient, locationService: LocationService) {
         self.weatherClient = weatherClient
         self.locationService = locationService
@@ -24,38 +31,83 @@ final class WeatherPresenterImpl: WeatherPresenter {
     
     func loadData() {
         Task {
-            await view?.showLoadingIndicator()
-            
-            let location = await locationService.getCurrentLocation()
-            await loadForecast(with: location.coordinate)
-            
-            lastLocation = location
-        }
-    }
-    
-    func refresh() {
-        Task {
-            let location = await locationService.getCurrentLocation()
-            
-            if let lastLocation, lastLocation.distance(from: location) < 1000 {
-                await loadCurrent(with: location.coordinate)
+            if isInitial {
+                await view?.render(.initialLoading)
             } else {
-                await loadForecast(with: location.coordinate)
+                await view?.render(.refreshing)
+            }
+            
+            var isForcastNeededToUpdate = true
+            var isCurrentNeededToUpdate = false
+            
+            let location = await locationService.getCurrentLocation()
+            
+            if !isInitial, let lastLocation {
+                isForcastNeededToUpdate = lastLocation.distance(from: location) > 1000
             }
             
             lastLocation = location
+            
+            if let current {
+                let last_updated_epoch = current.last_updated_epoch
+                let now_epoch = Int(Date().timeIntervalSince1970)
+                let diff = now_epoch - last_updated_epoch
+                
+                // текущая погода обновляется раз в 15 минут
+                isCurrentNeededToUpdate = diff > 15 * 60
+            }
+            
+            if let location = self.location {
+                var calendar = Calendar(identifier: .gregorian)
+                calendar.timeZone = TimeZone(identifier: location.tz_id)!
+                
+                let today = calendar.dateComponents([.day], from: Date())
+                let isAnotherDay = today.day != self.currentDay
+                self.currentDay = today.day
+                
+                // перешли в новые сутки
+                isForcastNeededToUpdate = isForcastNeededToUpdate || isAnotherDay
+            }
+            
+            if isForcastNeededToUpdate
+            {
+//                print("обновляем прогноз погоды")
+                await loadForecast(with: location.coordinate)
+            }
+            else if isCurrentNeededToUpdate, let forecast
+            {
+//                print("обновляем текущую погоду")
+                await loadCurrent(with: location.coordinate, forecast: forecast)
+            }
+            else if let loc = self.location, let current, let forecast
+            {
+//                print("ничего не обновляем")
+                let current = makeViewModel(from: current, location: loc)
+                let forecast = makeViewModel(from: forecast, location: loc)
+                await view?.render(.success(current, forecast))
+            }
         }
     }
     
-    private func loadCurrent(with coords: CLLocationCoordinate2D) async {
+    private func loadCurrent(with coords: CLLocationCoordinate2D, forecast: WeatherAPI.Forecast) async {
         
         do {
             let data = try await weatherClient.getCurrent(latitude: coords.latitude, longitude: coords.longitude)
             
-            await view?.hideLoadingIndicator()
-            
             let current = makeViewModel(from: data.current, location: data.location)
-            await view?.update(with: current)
+            let forecast = makeViewModel(from: forecast, location: data.location)
+            
+            await view?.render(.success(current, forecast))
+            
+            self.location = data.location
+            self.current = data.current
+            self.isInitial = false
+            
+            do {
+                var calendar = Calendar(identifier: .gregorian)
+                calendar.timeZone = TimeZone(identifier: data.location.tz_id)!
+                self.currentDay = calendar.dateComponents([.day], from: Date()).day
+            }
             
         } catch {
             await processError(error)
@@ -67,13 +119,22 @@ final class WeatherPresenterImpl: WeatherPresenter {
         do {
             let data = try await weatherClient.getForecast(latitude: coords.latitude, longitude: coords.longitude, days: 3)
             
-            await view?.hideLoadingIndicator()
             
             let current = makeViewModel(from: data.current, location: data.location)
-            await view?.update(with: current)
-            
             let forecast = makeViewModel(from: data.forecast, location: data.location)
-            await view?.update(with: forecast)
+            
+            await view?.render(.success(current, forecast))
+            
+            self.location = data.location
+            self.current = data.current
+            self.forecast = data.forecast
+            self.isInitial = false
+            
+            do {
+                var calendar = Calendar(identifier: .gregorian)
+                calendar.timeZone = TimeZone(identifier: data.location.tz_id)!
+                self.currentDay = calendar.dateComponents([.day], from: Date()).day
+            }
             
         } catch {
             await processError(error)
@@ -82,19 +143,19 @@ final class WeatherPresenterImpl: WeatherPresenter {
     
     private func processError(_ error: Error) async {
         
-        await view?.hideLoadingIndicator()
-        
         let apiKeyCodes: Set<Int> = [1002, 2006, 2007, 2008]
         
         if let weatherError = error as? WeatherError, case .apiError(let code, _) = weatherError, apiKeyCodes.contains(code) {
             let message = "Удостоверьтесь, что у вас валидный API-ключ"
             let vm = AlertViewModel(title: "Что-то пошло не так", message: message, isRetriable: false)
-            await view?.showAlert(vm)
+            await view?.render(.error(vm))
             return
         }
         
         let vm = AlertViewModel(title: "Что-то пошло не так", message: error.localizedDescription, isRetriable: true)
-        await view?.showAlert(vm)
+        await view?.render(.error(vm))
+        
+        isInitial = true
     }
 }
 

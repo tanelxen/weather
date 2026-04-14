@@ -9,5 +9,4 @@
 protocol WeatherPresenter: AnyObject {
     var view: WeatherView? { get set }
     func loadData()
-    func refresh()
 }
